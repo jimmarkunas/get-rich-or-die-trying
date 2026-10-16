@@ -1,0 +1,51 @@
+name: Profitability research (read only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'alpha/dex.py'
+      - 'alpha/aave_discovery.py'
+      - 'alpha/scoreboard.py'
+      - 'config.research.example.json'
+      - '.github/workflows/profitability-research.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [base, arbitrum, aave]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit tests
+        run: python -m unittest discover -s tests -q
+      - name: Read-only chain research
+        run: |
+          if [ '${{ matrix.target }}' = 'aave' ]; then
+            python -m alpha research --engine aave --config config.research.example.json --ledger output/research.jsonl
+          else
+            python -m alpha research --engine dex --chain '${{ matrix.target }}' --config config.research.example.json --ledger output/research.jsonl
+          fi
+      - name: Aggregate honest simulation scoreboard
+        if: always()
+        run: python -m alpha.scoreboard --ledgers output/research.jsonl --days 7 --out output/scoreboard.json
+      - name: Upload research observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profitability-${{ matrix.target }}-${{ github.run_id }}
+          path: |
+            output/research.jsonl
+            output/scoreboard.json
+          if-no-files-found: warn
+          retention-days: 14

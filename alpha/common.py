@@ -49,7 +49,7 @@ def request_json(url, *, params=None, timeout=10, retries=2):
 
 def jsonrpc_call(url, method, params, timeout=10):
     """JSON-RPC allowlist makes onchain scans read-only by construction."""
-    if method not in ('eth_call', 'eth_blockNumber', 'eth_chainId'):
+    if method not in ('eth_call', 'eth_blockNumber', 'eth_chainId', 'eth_getLogs'):
         raise ValueError('write or unsupported JSON-RPC method rejected')
     if not url.startswith('https://'):
         raise ValueError('RPC must use https')
@@ -59,7 +59,10 @@ def jsonrpc_call(url, method, params, timeout=10):
         obj=json.loads(resp.read(2_000_000))
     if 'error' in obj:
         raise RuntimeError(f'RPC failure: {obj["error"]}')
-    if not isinstance(obj.get('result'),str) or not obj['result'].startswith('0x'):
+    if method == 'eth_getLogs':
+        if not isinstance(obj.get('result'), list):
+            raise ValueError('RPC log result must be list')
+    elif not isinstance(obj.get('result'),str) or not obj['result'].startswith('0x'):
         raise ValueError('RPC result missing hex')
     return obj['result']
 
