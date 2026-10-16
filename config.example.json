@@ -1,0 +1,25 @@
+{
+  "kalshi": {
+    "enabled": true,
+    "series": "KXHIGHNY",
+    "tickers": [],
+    "groups": [],
+    "quantity": 10,
+    "max_markets": 10,
+    "taker_fee_rate_assumption": "0.07",
+    "buffer_usd": "0.25"
+  },
+  "aave": {
+    "enabled": true,
+    "rpc_url": "",
+    "chain_id": 1,
+    "pool": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+    "users": []
+  },
+  "flash_amm": {
+    "enabled": true,
+    "rpc_url": "",
+    "chain_id": 1,
+    "pairs": []
+  }
+}

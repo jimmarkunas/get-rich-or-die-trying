@@ -1,0 +1,10 @@
+{
+  "name": "MANUALLY_VERIFIED_V2_PAIR_PLACEHOLDERS",
+  "pool_a": "0x0000000000000000000000000000000000000001",
+  "pool_b": "0x0000000000000000000000000000000000000002",
+  "amount_token0_base_units": "1000000000000000000",
+  "pool_a_fee_bps": 30,
+  "pool_b_fee_bps": 30,
+  "flash_loan_premium_bps_assumption": 5,
+  "gas_cost_token0_base_units_assumption": "500000000000000"
+}
