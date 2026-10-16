@@ -8,16 +8,40 @@ on:
       - 'alpha/dex.py'
       - 'alpha/aave_discovery.py'
       - 'alpha/scoreboard.py'
+      - 'alpha/research_archive.py'
       - 'config.research.example.json'
       - '.github/workflows/profitability-research.yml'
+  schedule:
+    # 4 times a day for the seven-day validation gate; runtime gate ends scans Oct 23.
+    - cron: '11 */6 * * *'
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: automated-alpha-research-history
+  cancel-in-progress: false
 
 jobs:
-  research:
+  gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    outputs:
+      active: ${{ steps.check.outputs.active }}
+    steps:
+      - id: check
+        name: Do not perform scheduled scans beyond the 7-day gate
+        run: |
+          if [ '${{ github.event_name }}' = schedule ] && [ "$(date -u +%s)" -gt "$(date -u -d 2026-10-23T23:59:59Z +%s)" ]; then
+            echo 'active=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'active=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  research:
+    needs: gate
+    if: needs.gate.outputs.active == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -36,16 +60,61 @@ jobs:
           else
             python -m alpha research --engine dex --chain '${{ matrix.target }}' --config config.research.example.json --ledger output/research.jsonl
           fi
-      - name: Aggregate honest simulation scoreboard
-        if: always()
-        run: python -m alpha.scoreboard --ledgers output/research.jsonl --days 7 --out output/scoreboard.json
-      - name: Upload research observations
-        if: always()
+      - name: Upload each read-only snapshot
         uses: actions/upload-artifact@v4
         with:
           name: profitability-${{ matrix.target }}-${{ github.run_id }}
+          path: output/research.jsonl
+          if-no-files-found: error
+          retention-days: 14
+
+  archive:
+    needs: [gate, research]
+    if: needs.gate.outputs.active == 'true' && needs.research.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Retrieve all three research snapshots
+        uses: actions/download-artifact@v4
+        with:
+          pattern: profitability-*-${{ github.run_id }}
+          path: output/downloads
+      - name: Read previous independent research branch
+        run: |
+          set -euo pipefail
+          git fetch origin alpha-research-history:refs/remotes/origin/alpha-research-history
+          mkdir -p output
+          git show origin/alpha-research-history:history/research-observations.jsonl > output/previous.jsonl || :
+      - name: Merge bounded history and calculate seven-day research scoreboard
+        run: |
+          python -m alpha.research_archive \
+            --previous output/previous.jsonl \
+            --current-dir output/downloads \
+            --history-out output/merged.jsonl \
+            --scoreboard-out output/scoreboard.json
+      - name: Persist history separate from main
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/alpha-research-history" origin/alpha-research-history
+          mkdir -p "$RUNNER_TEMP/alpha-research-history/history"
+          cp output/merged.jsonl "$RUNNER_TEMP/alpha-research-history/history/research-observations.jsonl"
+          cp output/scoreboard.json "$RUNNER_TEMP/alpha-research-history/history/research-scoreboard.json"
+          git -C "$RUNNER_TEMP/alpha-research-history" config user.name 'github-actions[bot]'
+          git -C "$RUNNER_TEMP/alpha-research-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$RUNNER_TEMP/alpha-research-history" add history/
+          if ! git -C "$RUNNER_TEMP/alpha-research-history" diff --cached --quiet; then
+            git -C "$RUNNER_TEMP/alpha-research-history" commit -m 'data: append read-only profitability research'
+            git -C "$RUNNER_TEMP/alpha-research-history" push origin HEAD:alpha-research-history
+          fi
+      - name: Upload historical scoreboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-seven-day-scoreboard-${{ github.run_id }}
           path: |
-            output/research.jsonl
+            output/merged.jsonl
             output/scoreboard.json
-          if-no-files-found: warn
           retention-days: 14

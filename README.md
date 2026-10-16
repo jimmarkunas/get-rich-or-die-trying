@@ -183,3 +183,15 @@ Sources: [Uniswap v2 deployments](https://developers.uniswap.org/docs/protocols/
 [Aave V3 Pool Borrow event interface](https://github.com/aave-dao/aave-v3-origin/blob/main/src/contracts/interfaces/IPool.sol),
 [Base RPC limits](https://basehub.org/api-reference/rpc-overview/),
 [Arbitrum RPC](https://docs.arbitrum.io/chain-info).
+
+### Seven-day repeatability gate (read-only research history)
+
+The `profitability-research.yml` matrix is scheduled four times daily at minute
+11 UTC, through **October 23, 2026**. A UTC-date gate prevents further scheduled
+scans after that date (manual workflows remain available). Three successful
+network snapshots are required before a run is appended. The aggregation job
+writes a rolling capped history and a 7-day, no-realized-P&L scoreboard to the
+independent Git branch `alpha-research-history`. GitHub artifact retention is
+14 days. Missing/failed API results do **not** turn into assumed zero opportunities.
+Public repository history contains research metadata only, with no private
+accounts or credentials. GitHub Actions schedules can be delayed or skipped.
