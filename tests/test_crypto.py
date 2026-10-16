@@ -82,7 +82,7 @@ class TestCryptoStrategies(TestCase):
     def test_independent_30_day_holdout(self):
         candles=fake_candles()
         result=backtest(candles,'BTCUSD')
-        self.assertEqual(result['split']['holdout_days'],30)
+        self.assertEqual(result['split']['holdout_calendar_days'],30)
         self.assertEqual(result['bars'],2160)
         for s in ('momentum','grid'):
             self.assertEqual(result['strategies'][s]['holdout']['bars_evaluated'],720)
@@ -244,3 +244,47 @@ class TestHourlyCloseTimestampVariants(TestCase):
         row=raw(fake_candles(1)[0]);row[6]=row[0]+24*HOUR_MS
         with self.assertRaisesRegex(ValueError,'delta_ms='):
             parse_candle(row)
+
+class TestRealExchangeGaps(TestCase):
+    def test_9_missing_hours_do_not_get_synthetic_fills(self):
+        raw_bars=fake_candles(2160)
+        gap=set(range(340,349))
+        bars=[c for i,c in enumerate(raw_bars) if i not in gap]
+        self.assertEqual(len(bars),2151)
+        self.assertEqual(len(validate_candles(bars,min_count=2150,max_missing_hours=10)),2151)
+        report=backtest(bars,'BTCUSD')
+        self.assertEqual(report['data_quality']['missing_hours'],9)
+        self.assertEqual(report['data_quality']['missing_bars_imputed'],0)
+        self.assertEqual(report['split']['holdout_calendar_days'],30)
+        self.assertEqual(report['strategies']['momentum']['holdout']['bars_evaluated'],720)
+
+    def test_large_gap_refused(self):
+        bars=fake_candles(2160)
+        with self.assertRaises(ValueError):validate_candles(bars[:20]+bars[50:],min_count=1,max_missing_hours=10)
+
+    @patch('alpha.crypto_data.public_get')
+    def test_api_pagination_with_gaps(self, get):
+        bars=fake_candles(2160)
+        bars=[bar for i,bar in enumerate(bars) if i not in set(range(800,809))]
+        cutoff=bars[-1].timestamp_ms+HOUR_MS
+        def endpoint(path,params):
+            options=[raw(b) for b in bars if params['startTime']<=b.timestamp_ms<cutoff]
+            return options[:params['limit']]
+        get.side_effect=endpoint
+        received=fetch_candles('BTCUSD',2160,now_ms=cutoff)
+        self.assertEqual(received,bars)
+        self.assertEqual(len(received),2151)
+
+class TestForwardGapSafety(TestCase):
+    def test_no_forward_fill_when_recent_history_has_hole(self):
+        bars=fake_candles(120)
+        state=create_state()
+        def initial(symbol,n):return bars
+        quote=lambda symbol:{'bid':Decimal(99),'ask':Decimal(100),'bid_qty':Decimal(100),'ask_qty':Decimal(100)}
+        state,_=paper_cycle(state,symbols=('ETHUSD',),candle_reader=initial,quote_reader=quote)
+        nextbars=fake_candles(121)[1:]
+        # A hole 20 bars back prevents using indicators over a discontinuity.
+        nextbars=nextbars[:99]+nextbars[100:]
+        state,logs=paper_cycle(state,symbols=('ETHUSD',),candle_reader=lambda s,n:nextbars,quote_reader=quote)
+        self.assertEqual({x['status'] for x in logs},{'stale_gap_skipped'})
+        self.assertFalse(any(x.get('simulated_fill') for x in logs))

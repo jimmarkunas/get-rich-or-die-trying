@@ -243,3 +243,13 @@ sample. This version cannot submit trades.
 
 Official sources: [Binance.US API](https://docs.binance.us/),
 [Binance.US fees](https://www.binance.us/fees).
+
+### Data-quality rule for actual exchange outages
+
+A genuine historical feed can contain a few hours with no candles. v0.5 rejects
+more than 0.5% missing hourly bars in the requested 90-day **calendar** window.
+No missing OHLCV is synthesized. The engine halts simulated entries around
+gaps until 48 contiguous historical hours exist, and the latest 30 calendar
+days remain the holdout. The report publishes coverage percent, missing-hour
+count, and zero-imputation assurance. A missing endpoint hour or more than the
+allowed gap rate fails the job rather than manufacturing performance.

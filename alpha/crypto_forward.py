@@ -49,7 +49,7 @@ def paper_cycle(previous=None, symbols=SYMBOLS, candle_reader=fetch_candles,
     for symbol in symbols:
         if symbol not in SYMBOLS:raise ValueError('invalid spot symbol')
         bars=candle_reader(symbol,120)
-        if len(bars)!=120:raise ValueError('missing current candle warmup')
+        if len(bars)<119:raise ValueError('insufficient recent candle warmup')
         quote=quote_reader(symbol)
         latest=bars[-1].timestamp_ms
         existing=prev['symbols'].get(symbol)
@@ -67,7 +67,9 @@ def paper_cycle(previous=None, symbols=SYMBOLS, candle_reader=fetch_candles,
             continue
         # A scanner that was offline cannot claim it could have filled trades at historical quotes.
         gap=latest-last
-        missed=gap > 2*HOUR_MS
+        recent=bars[-49:]
+        recent_contiguous=all(recent[j].timestamp_ms-recent[j-1].timestamp_ms==HOUR_MS for j in range(1,len(recent)))
+        missed=gap > 2*HOUR_MS or not recent_contiguous
         for strategy in ('momentum','grid'):
             current=deserialize(existing['portfolios'][strategy])
             action='hold' if missed else decision(strategy,bars,current['units']>0,current['entry_price'])
