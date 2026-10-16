@@ -1,0 +1,8 @@
+{
+  "name": "EXAMPLE_ONLY_exhaustive_outcomes",
+  "payout_partition_verified": false,
+  "legs": [
+    {"ticker": "REPLACE_WITH_REAL_MARKET_A", "side": "yes"},
+    {"ticker": "REPLACE_WITH_REAL_MARKET_B", "side": "yes"}
+  ]
+}
