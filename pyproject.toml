@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "automated-alpha-readonly"
-version = "0.1.0"
-description = "Three-engine, read-only arbitrage observation research prototype"
+version = "0.5.0"
+description = "Read-only arbitrage and crypto spot paper-trading research"
 requires-python = ">=3.10"
 readme = "README.md"
 

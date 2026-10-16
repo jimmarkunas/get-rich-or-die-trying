@@ -184,14 +184,62 @@ Sources: [Uniswap v2 deployments](https://developers.uniswap.org/docs/protocols/
 [Base RPC limits](https://basehub.org/api-reference/rpc-overview/),
 [Arbitrum RPC](https://docs.arbitrum.io/chain-info).
 
-### Seven-day repeatability gate (read-only research history)
+## v0.5 — Automated spot crypto research (paper only)
 
-The `profitability-research.yml` matrix is scheduled four times daily at minute
-11 UTC, through **October 23, 2026**. A UTC-date gate prevents further scheduled
-scans after that date (manual workflows remain available). Three successful
-network snapshots are required before a run is appended. The aggregation job
-writes a rolling capped history and a 7-day, no-realized-P&L scoreboard to the
-independent Git branch `alpha-research-history`. GitHub artifact retention is
-14 days. Missing/failed API results do **not** turn into assumed zero opportunities.
-Public repository history contains research metadata only, with no private
-accounts or credentials. GitHub Actions schedules can be delayed or skipped.
+This optional new research lane analyzes **Binance.US** public hourly candles for
+BTCUSD, ETHUSD, and SOLUSD. It never creates orders, uses accounts, requests API
+keys, borrows money or trades with leverage. Paper portfolios are *fictional*:
+$1,000 per symbol *per strategy*, rather than your own balances.
+
+### What is actually being compared
+
+- **Momentum:** 12h/48h moving average and price trend, 3% model exit stop.
+- **Grid-style reversion:** buy below a 24h average and sell above it or on a
+  3.5% model exit stop. This is a *signal-based taker* reversion experiment, NOT
+  a maker grid order-book simulation and not a claim of passive grid income.
+- Both are **spot, long-only**; max a quarter of cash per entry, no margin.
+- Assumes 0.02% taker fee, plus **0.05% unfavorable price slippage per side**.
+  Exact live fees, fills, spreads, and price impact may be different.
+- Backtests use *completed* one-hour candles for 90 days; signals from the
+  previous completed bar; simulated fills at the **following bar open**.
+  Previous-bar volume caps trades; future-bar volume is never used for fills.
+- First ~60 days are development; the last 30 days are **untouched holdout**.
+  Both are run with fixed parameters; a 25%-invested buy-and-hold benchmark is
+  reported on holdout. Holdout results are not a prediction.
+- Forward paper records use a contemporaneously observed Binance.US best
+  ask/bid plus adverse modeled slippage. First run **seeds** positions without
+  trading; subsequent new-bar observations can produce fictional fills. Long
+  offline gaps **skip** trading rather than backfill imaginary execution.
+  Top-of-book quantity must cover the full hypothetical order. Public quote
+  API has no timestamp, so an observed quote is not evidence of real execution.
+- Historical backtest and forward data are never combined into reported real
+  earnings. No live orders, paid feeds, keys, or alerts firing real trades.
+
+### How to run
+
+```bash
+python -m unittest discover -s tests -q
+python -m alpha.crypto_cli backtest --days 90 --out output/crypto-backtest.json
+python -m alpha.crypto_cli forward --state-out output/new-paper-state.json \
+  --observations output/crypto-paper-observations.jsonl
+python -m alpha.crypto_dashboard --backtest output/crypto-backtest.json \
+  --state output/new-paper-state.json --out output/crypto-dashboard.html
+```
+
+Run the `Crypto spot paper research (no trading)` GitHub Actions workflow for
+one hosted API test. After publication, it runs at minute 13 hourly (GitHub
+scheduling is best-effort), archives state to the separate `alpha-crypto-history`
+branch, and publishes reports and an HTML dashboard. On an initial run, paper
+portfolios are seeded but **no pretend past trades** are created. An API error
+fails the job; no manufactured $0 performance or false success is recorded.
+The 90-day backtest is regenerated on manually dispatched/push runs, and once
+daily at approximately 05:13 UTC on scheduled runs. The historical report is
+persisted with the paper state and made available in an Actions artifact.
+
+**Gate for any live trading:** separate user authorization, platform eligibility,
+fee/minimum-order verification, wider backtesting, out-of-sample performance,
+actual order-book execution model and limits, plus a significant *forward* paper
+sample. This version cannot submit trades.
+
+Official sources: [Binance.US API](https://docs.binance.us/),
+[Binance.US fees](https://www.binance.us/fees).
