@@ -218,3 +218,19 @@ class TestNoFutureVolume(TestCase):
                       a[100].close,Decimal('0'))
         for strat in ('momentum','grid'):
             self.assertEqual(test_segment(a,strat,90,101),test_segment(b,strat,90,101))
+
+class TestPaperCliStateBootstrapping(TestCase):
+    def test_empty_git_show_redirect_treated_as_new_state(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from alpha.crypto_cli import main
+        with tempfile.TemporaryDirectory() as d:
+            previous=Path(d)/'missing_previous_is_empty.json'
+            previous.write_text('')
+            with patch('alpha.crypto_cli.paper_cycle',return_value=(create_state(),[])) as run:
+                code=main(['forward','--symbols','BTCUSD','--state-in',str(previous),
+                           '--state-out',str(Path(d)/'new.json'),
+                           '--observations',str(Path(d)/'observations.jsonl')])
+            self.assertEqual(code,0)
+            self.assertIsNone(run.call_args.args[0])
