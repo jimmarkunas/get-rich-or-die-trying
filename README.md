@@ -118,3 +118,68 @@ public; NEVER put keys, account identifiers or secret configurations there.
 
 Docs: https://docs.kalshi.com/api-reference/events/get-events and
 https://docs.kalshi.com/api-reference/market/get-market-orderbook
+
+## v0.4 — Profitability-validation research gate (NO live trading)
+
+This iteration fixes the discovery sampling bias and adds **bounded, read-only**
+DeFi research. On-chain observations are **not flash-loan transaction simulations**.
+A positive computed AMM round trip is a theoretical price-impact-aware
+opportunity, not a verified executable transaction, profit, or claim that we can
+compete with MEV operators.
+
+### Kalshi: selection + size sensitivity
+
+- Rank mutually exclusive event pairs by *indicative asks* (tie-break on
+  published liquidity), not alphabetic tickers. Rotate ties across hours.
+- Query depth once per selected pair, test up to five whole-unit quantities.
+- Do not label metadata-screened rules as independently legally verified.
+- Optional command: `python -m alpha discover --pages 2 --max-events 12 --quantities 5,10,25`.
+
+### Base / Arbitrum: paired V2 factory research
+
+`python -m alpha research --engine dex --chain base --config config.research.example.json --ledger output/base.jsonl`
+
+`python -m alpha research --engine dex --chain arbitrum --config config.research.example.json --ledger output/arbitrum.jsonl`
+
+- Reads Uniswap-V2-style `getPair` from the two configured DEX factories
+  for a **verified token-address pair**, then pool reserves at a pinned block.
+- Tests both round-trip directions and three token0 position sizes with
+  constant-product price impact, assumed pool fees, assumed flash premium and
+  assumed gas. Verifies on-chain token addresses and ERC-20 decimals.
+- Does **not** verify actual pool fee schedules, perform transaction bundles,
+  submit transactions, model MEV competition or compute USD profits.
+- Base/Arbitrum public RPCs are rate-limited and unsuitable for high-volume
+  or latency-sensitive production. The factory and token deployment lists must
+  be reverified onchain when running against new chains or changing contracts.
+
+### Aave: recent borrower sampling, not complete liquidation indexing
+
+`python -m alpha research --engine aave --config config.research.example.json --ledger output/aave.jsonl`
+
+- Gets at most 2,000 blocks of **Borrow** event logs from the specified Aave
+  V3 Pool address, extracts indexed debt-owner `onBehalfOf`, deduplicates, and
+  reads sampled health factors at the same block. Default lookback is 100.
+- Recent Borrow logs do not cover borrowers whose debt originated before the
+  window, and a low health factor is not a net-positive liquidation trade.
+  Per-reserve debt/collateral/bonus and full execution costs remain unmodeled.
+
+### Evidence scoreboard
+
+`python -m alpha.scoreboard --ledgers output/*.jsonl --days 7 --out output/scoreboard.json`
+
+The scoreboard counts observations, types, and indicative net where USD is
+actually reported. **Realized profit remains unknown, with zero verified fills.**
+
+`Profitability research (read only)` GitHub Actions runs unit tests and
+three separate public-RPC probes (Base, Arbitrum, Ethereum Aave) on a push to
+main touching its code and on manual dispatch. They publish research artifacts
+without credentials or trade permissions. Public RPC rejection is a legitimate
+**FAIL**, not proof there are no opportunities. It is not a scheduled
+low-latency trading system. A seven-day research gate requires repeated,
+validated runs; one test is insufficient. No money, signing, borrowing,
+portfolio data or LIFE OS production integrations are involved.
+
+Sources: [Uniswap v2 deployments](https://developers.uniswap.org/docs/protocols/v2/deployments),
+[Aave V3 Pool Borrow event interface](https://github.com/aave-dao/aave-v3-origin/blob/main/src/contracts/interfaces/IPool.sol),
+[Base RPC limits](https://basehub.org/api-reference/rpc-overview/),
+[Arbitrum RPC](https://docs.arbitrum.io/chain-info).

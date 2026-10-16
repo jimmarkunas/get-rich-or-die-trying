@@ -9,6 +9,8 @@ from .common import write_observations
 from .defi import scan_aave, scan_flash_amm
 from .kalshi import scan_kalshi
 from .discovery import scan_exclusive_events
+from .dex import scan_factories
+from .aave_discovery import scan_borrowers
 from .report import render_report
 
 
@@ -58,14 +60,48 @@ def main(argv=None):
     discover.add_argument('--max-events',type=int,default=12)
     discover.add_argument('--max-pairs-per-event',type=int,default=2)
     discover.add_argument('--series',default=None)
+    discover.add_argument('--quantities',default=None,help='comma-separated sizes, max five')
+    research=sub.add_parser('research',help='bounded public RPC research; no signing')
+    research.add_argument('--config',default='config.research.example.json')
+    research.add_argument('--engine',choices=['dex','aave'],required=True)
+    research.add_argument('--chain',default=None,help='chain key from research config')
+    research.add_argument('--ledger',default='output/research.jsonl')
     report=sub.add_parser('report',help='produce local static HTML dashboard')
     report.add_argument('--ledger',default='output/opportunities.jsonl')
     report.add_argument('--out',default='output/dashboard.html')
     args=parser.parse_args(argv)
+    if args.command=='research':
+        try:
+            cfg=json.loads(Path(args.config).read_text(encoding='utf-8'))
+            if args.engine=='dex':
+                chains=cfg.get('dex',{})
+                chosen=[args.chain] if args.chain else list(chains)
+                if not chosen or len(chosen)>3: raise ValueError('select up to three known chains')
+                records=[];errors={}
+                for name in chosen:
+                    if name not in chains:raise ValueError('unknown chain '+str(name))
+                    c=chains[name]
+                    part,err=scan_factories(c['rpc_url'],int(c['chain_id']),c['factories'],c['pairs'],
+                        c['sizes_token0_base_units'],
+                        gas_cost_token0_base_units=int(c['gas_cost_token0_base_units_assumption']),
+                        flash_premium_bps=int(c['flash_premium_bps_assumption']),
+                        fee_bps=int(c['pool_fee_bps_assumption']))
+                    records+=part;errors.update({name+':'+k:v for k,v in err.items()})
+            else:
+                a=cfg['aave']
+                records,errors=scan_borrowers(a['rpc_url'],a['pool'],int(a['chain_id']),
+                    lookback=int(a.get('lookback',400)),max_users=int(a.get('max_users',25)))
+            write_observations(args.ledger,records)
+            print(json.dumps({'observations':len(records),'errors':errors,
+                'read_only':True,'real_money_trades':0},indent=2))
+            return 1 if errors else 0
+        except Exception as exc:
+            print(f'research: {type(exc).__name__}: {exc}',file=sys.stderr);return 1
     if args.command=='discover':
         try:
             records,errors=scan_exclusive_events(quantity=args.quantity,max_pages=args.pages,
-                max_events=args.max_events,max_pairs_per_event=args.max_pairs_per_event,series=args.series)
+                max_events=args.max_events,max_pairs_per_event=args.max_pairs_per_event,series=args.series,
+                quantities=[int(v) for v in args.quantities.split(',')] if args.quantities else None)
             write_observations(args.ledger,records)
             print(json.dumps({'observations':len(records),'errors':errors,
                 'review_candidates':sum(o.classification=='candidate_rule_review_required' for o in records)},indent=2))
