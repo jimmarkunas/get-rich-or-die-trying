@@ -1,6 +1,12 @@
 name: Kalshi read-only exclusive-event discovery
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/discover-kalshi.yml'
+      - 'alpha/discovery.py'
+      - 'alpha/archive.py'
   workflow_dispatch:
   schedule:
     - cron: '37 * * * *'
