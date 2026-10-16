@@ -1,0 +1,116 @@
+{
+  "symbols": {
+    "BTCUSD": {
+      "last_closed_open_ms": 1792188000000,
+      "portfolios": {
+        "grid": {
+          "bars": 0,
+          "cash": "1000",
+          "cost_basis": "0",
+          "entry_price": null,
+          "exposure_bars": 0,
+          "fees": "0",
+          "losses": 0,
+          "max_drawdown_pct": "0",
+          "peak_equity": "1000",
+          "slippage_cost": "0",
+          "trades": 0,
+          "turnover_usd": "0",
+          "units": "0",
+          "wins": 0
+        },
+        "momentum": {
+          "bars": 0,
+          "cash": "1000",
+          "cost_basis": "0",
+          "entry_price": null,
+          "exposure_bars": 0,
+          "fees": "0",
+          "losses": 0,
+          "max_drawdown_pct": "0",
+          "peak_equity": "1000",
+          "slippage_cost": "0",
+          "trades": 0,
+          "turnover_usd": "0",
+          "units": "0",
+          "wins": 0
+        }
+      }
+    },
+    "ETHUSD": {
+      "last_closed_open_ms": 1792188000000,
+      "portfolios": {
+        "grid": {
+          "bars": 0,
+          "cash": "1000",
+          "cost_basis": "0",
+          "entry_price": null,
+          "exposure_bars": 0,
+          "fees": "0",
+          "losses": 0,
+          "max_drawdown_pct": "0",
+          "peak_equity": "1000",
+          "slippage_cost": "0",
+          "trades": 0,
+          "turnover_usd": "0",
+          "units": "0",
+          "wins": 0
+        },
+        "momentum": {
+          "bars": 0,
+          "cash": "1000",
+          "cost_basis": "0",
+          "entry_price": null,
+          "exposure_bars": 0,
+          "fees": "0",
+          "losses": 0,
+          "max_drawdown_pct": "0",
+          "peak_equity": "1000",
+          "slippage_cost": "0",
+          "trades": 0,
+          "turnover_usd": "0",
+          "units": "0",
+          "wins": 0
+        }
+      }
+    },
+    "SOLUSD": {
+      "last_closed_open_ms": 1792188000000,
+      "portfolios": {
+        "grid": {
+          "bars": 0,
+          "cash": "1000",
+          "cost_basis": "0",
+          "entry_price": null,
+          "exposure_bars": 0,
+          "fees": "0",
+          "losses": 0,
+          "max_drawdown_pct": "0",
+          "peak_equity": "1000",
+          "slippage_cost": "0",
+          "trades": 0,
+          "turnover_usd": "0",
+          "units": "0",
+          "wins": 0
+        },
+        "momentum": {
+          "bars": 0,
+          "cash": "1000",
+          "cost_basis": "0",
+          "entry_price": null,
+          "exposure_bars": 0,
+          "fees": "0",
+          "losses": 0,
+          "max_drawdown_pct": "0",
+          "peak_equity": "1000",
+          "slippage_cost": "0",
+          "trades": 0,
+          "turnover_usd": "0",
+          "units": "0",
+          "wins": 0
+        }
+      }
+    }
+  },
+  "version": 1
+}
