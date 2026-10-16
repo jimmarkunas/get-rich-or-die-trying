@@ -47,7 +47,7 @@ def main(argv=None):
             'output':args.out,'live_trades':0}))
         return 0
     previous_path=Path(args.state_in)
-    prev=json.loads(previous_path.read_text(encoding='utf-8')) if previous_path.exists() else None
+    prev=json.loads(previous_path.read_text(encoding='utf-8')) if previous_path.exists() and previous_path.stat().st_size else None
     next_state,observations=paper_cycle(prev,symbols)
     save_json(args.state_out,next_state)
     dest=Path(args.observations)
