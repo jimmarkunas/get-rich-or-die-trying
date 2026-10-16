@@ -5,7 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
 from alpha.common import Observation, jsonrpc_call, words, write_observations
-from alpha.kalshi import ask_levels, basket_quote, fee, parse_bids, quote_purchase, scan_kalshi
+from alpha.kalshi import ask_levels, basket_quote, fee, parse_bids, quote_purchase, scan_kalshi, fetch_book
 from alpha.defi import account_data, amm_out, pool_state, roundtrip, scan_aave, scan_flash_amm
 from alpha.report import render_report
 
@@ -14,6 +14,13 @@ def book(yes, no):
     return {'orderbook_fp':{'yes_dollars':yes,'no_dollars':no}}
 
 class KalshiTests(unittest.TestCase):
+    def test_decimal_ticker_allowed_and_encoded(self):
+        with patch('alpha.kalshi.request_json', return_value=book([], [])) as request:
+            fetch_book('KXHIGHNY-26OCT17-B68.5')
+        self.assertTrue(request.call_args.args[0].endswith('/KXHIGHNY-26OCT17-B68.5/orderbook'))
+        with self.assertRaises(ValueError):
+            fetch_book('A/B')
+
     def test_inverse_order_book(self):
         b=book([['0.36','7'],['0.30','8']],[['0.45','12'],['0.40','2']])
         self.assertEqual(ask_levels(b,'yes')[0],(Decimal('0.55'),12))

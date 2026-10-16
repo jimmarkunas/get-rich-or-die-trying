@@ -100,7 +100,7 @@ def fetch_markets(series,limit=20):
 
 
 def fetch_book(ticker):
-    if not ticker or not all(c.isalnum() or c=='-' for c in ticker): raise ValueError('invalid ticker')
+    if not ticker or not all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._' for c in ticker): raise ValueError('invalid ticker')
     return request_json(f'{BASE}/markets/{quote(ticker,safe="")}/orderbook')
 
 
