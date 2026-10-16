@@ -4,7 +4,7 @@ The grid model is intentionally a *grid-style mean-reversion signal* filled as
 conservative TAKERS, not a fictional zero-fee or queue-priority maker fill.
 """
 from decimal import Decimal
-from .crypto_data import number
+from .crypto_data import number, HOUR_MS
 
 STARTING_CASH = Decimal('1000')
 FEE_RATE = Decimal('0.0002')          # Binance.US published non-VIP taker fee, other pairs
@@ -139,7 +139,11 @@ def test_segment(candles, strategy, begin, end):
     for i in range(begin,end):
         # signal through i-1; next bar's OPEN is the earliest possible fill
         prior=candles[:i]
-        action=decision(strategy,prior,state['units']>0,state['entry_price'])
+        # Do not use stale indicators across maintenance/no-trade gaps.
+        # Require 48 contiguous preceding bars, including the execution hour.
+        span=candles[max(0,i-48):i+1]
+        continuous=all(span[j].timestamp_ms-span[j-1].timestamp_ms==HOUR_MS for j in range(1,len(span)))
+        action=decision(strategy,prior,state['units']>0,state['entry_price']) if continuous else 'hold'
         execute(state,action,candles[i].open,prior[-1].volume)
         mark(state,candles[i].close)
     result=snapshot(state,candles[end-1].close)
@@ -156,9 +160,19 @@ def buy_hold_segment(candles,begin,end):
 
 
 def backtest(candles,symbol,history_days=90):
-    if len(candles) < history_days*24 or history_days < 90:
-        raise ValueError('at least 90 days complete history required')
-    split=len(candles)-30*24
+    if history_days < 90 or not candles:
+        raise ValueError('at least 90 calendar days of prices required')
+    expected=history_days*24
+    observed_hours=(candles[-1].timestamp_ms-candles[0].timestamp_ms)//HOUR_MS+1
+    if observed_hours != expected:
+        raise ValueError('historical calendar window is incomplete')
+    missing_hours=expected-len(candles)
+    if missing_hours<0 or missing_hours>max(1,int(expected*.005)):
+        raise ValueError('excessive missing historical hourly data')
+    if any(candles[i].timestamp_ms<=candles[i-1].timestamp_ms for i in range(1,len(candles))):
+        raise ValueError('nonchronological candles')
+    holdout_start=candles[-1].timestamp_ms+HOUR_MS-30*24*HOUR_MS
+    split=next((i for i,c in enumerate(candles) if c.timestamp_ms>=holdout_start),len(candles))
     if split < 50*24:
         raise ValueError('not enough training history')
     runs={}
@@ -168,9 +182,12 @@ def backtest(candles,symbol,history_days=90):
     benchmark=buy_hold_segment(candles,split,len(candles))
     return {'symbol':symbol,'interval':'1h','bars':len(candles),
             'first_open_ms':candles[0].timestamp_ms,'last_closed_open_ms':candles[-1].timestamp_ms,
+            'data_quality':{'observed_bars':len(candles),'expected_hours':expected,
+                'missing_hours':missing_hours,'coverage_pct':round(100*len(candles)/expected,3),
+                'missing_bars_imputed':0},
             'split':{'development_end_open_ms':candles[split-1].timestamp_ms,
                      'holdout_start_open_ms':candles[split].timestamp_ms,
-                     'holdout_days':30,'development_days':(split-WARMUP)/24},
+                     'holdout_calendar_days':30,'development_calendar_days':history_days-30},
             'strategies':runs,'holdout_buy_hold_25pct_benchmark':benchmark,
             'assumed_taker_fee_rate':str(FEE_RATE),'adverse_slippage_rate':str(SLIPPAGE_RATE),
             'initial_cash_per_strategy_usd':str(STARTING_CASH),

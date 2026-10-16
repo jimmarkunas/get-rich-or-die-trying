@@ -71,14 +71,20 @@ def parse_candle(row):
     return Candle(ts, opening, high, low, close, volume)
 
 
-def validate_candles(candles, min_count=1):
+def validate_candles(candles, min_count=1, max_missing_hours=0):
     if len(candles) < min_count:
         raise ValueError(f'insufficient historical bars: {len(candles)} < {min_count}')
+    missing = 0
     for i, candle in enumerate(candles):
         if not isinstance(candle, Candle):
             raise ValueError('invalid Candle object')
-        if i and candle.timestamp_ms != candles[i-1].timestamp_ms + HOUR_MS:
-            raise ValueError('duplicate, missing or nonmonotonic hourly bar')
+        if i:
+            delta = candle.timestamp_ms - candles[i-1].timestamp_ms
+            if delta < HOUR_MS or delta % HOUR_MS:
+                raise ValueError('duplicate or nonmonotonic hourly bar')
+            missing += delta // HOUR_MS - 1
+    if missing > max_missing_hours:
+        raise ValueError(f'too many missing hourly bars: {missing} > {max_missing_hours}')
     return candles
 
 
@@ -114,9 +120,12 @@ def fetch_candles(symbol, hours, now_ms=None):
         cursor = next_cursor
         if len(results) > hours:
             raise ValueError('historical page exceeded requested range')
-    validate_candles(results, min_count=hours)
-    if len(results) != hours or results[0].timestamp_ms != start or results[-1].timestamp_ms != cutoff - HOUR_MS:
-        raise ValueError('historical range incomplete; no backtest allowed')
+    # Real exchanges sometimes have maintenance/no-trade gaps. NEVER invent
+    # missing OHLCV. Reject >0.5% missing hours; simulate no entry near gaps.
+    missing_cap = max(1, int(hours * .005))
+    validate_candles(results, min_count=hours-missing_cap, max_missing_hours=missing_cap)
+    if results[0].timestamp_ms != start or results[-1].timestamp_ms != cutoff - HOUR_MS:
+        raise ValueError(f'historical endpoints missing for {symbol}: first={results[0].timestamp_ms}, last={results[-1].timestamp_ms}, expected_start={start}, expected_last={cutoff-HOUR_MS}')
     return results
 
 
