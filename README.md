@@ -1,4 +1,4 @@
-# Automated Alpha v0.1 — READ ONLY
+# Automated Alpha v0.2 — READ ONLY
 
 Three scanner modules sharing a local observation ledger:
 
@@ -26,7 +26,7 @@ python -m alpha scan --config config.json --engine kalshi
 python -m alpha report --ledger output/opportunities.jsonl --out output/dashboard.html
 ```
 
-The first scan requires internet access. For Aave and flash AMM, configure an **Ethereum mainnet** HTTPS JSON-RPC endpoint plus real watchlist addresses / V2-compatible pools in `config.json`. Omitting those entries safely disables their actual fetches. The Kalshi example queries open KXHIGHNY markets; if none are open, it records zero observations, not zero opportunities across Kalshi.
+The first scan requires internet access. For Aave and flash AMM, configure an **Ethereum mainnet** HTTPS JSON-RPC endpoint plus real watchlist addresses / V2-compatible pools in `config.json`. Omitting those entries safely disables their actual fetches. The Kalshi example queries open KXHIGHNY markets; if none are open, it records a `no_open_markets_in_configured_series` heartbeat; this does not imply zero opportunities elsewhere.
 
 To run repeated scans on a controlled host (never faster than one/minute):
 
@@ -59,30 +59,19 @@ Use a systemd service or cron under your control for persistence; this chat does
 - Aave flash loans: https://aave.com/docs/aave-v3/guides/flash-loans
 - Aave deployed addresses: https://github.com/aave-dao/aave-address-book
 
-## GitHub deployment: zero-secret live data pilot (v0.2)
+## GitHub deployment: zero-secret live-data pilot (v0.2)
 
-**Recommended via the connected GitHub app:** Create a **private** repository named `jimmarkunas/automated-alpha` and **add a starter README** so the default `main` branch exists. Then ask ChatGPT to publish this package's source files through the connected GitHub app, replacing the starter README with this one. The connected app can edit files inside an existing repository but cannot create a new repository. Keep `config.json` and `output/` out of Git (both are gitignored). This is a standalone project, not part of LIFE OS.
+Repository: https://github.com/jimmarkunas/get-rich-or-die-trying
 
-**Alternative using your own Mac:** If you'll do the entire push from Git CLI, create the repository **without** a starter README, clone or extract this package locally, and follow the commands below. Those git commands are not needed with the connected-app approach.
+**Important:** This repository is currently **public**. NEVER commit API keys, wallet private keys, credentials, or personal account details. The supplied `config.example.json` has no secrets; `config.json` and `output/` are excluded from version control.
 
-Two Actions workflows are included:
+GitHub Actions workflows:
 
-- `Read-only unit tests`: validates program logic on every push and manual trigger; does not access live exchanges.
-- `Read-only market snapshot`: manually triggerable or scheduled at minute 17 each hour. Fetches **public Kalshi data only**, runs the unit tests, produces a standalone HTML dashboard and JSONL observations, and uploads a seven-day-retention run artifact. No API keys are needed. An empty valid series response is recorded as `no_open_markets_in_configured_series`, not a profitable opportunity.
+- **Read-only unit tests** run on pushes and pull requests.
+- **Read-only market snapshot** runs after scanner/workflow changes on `main`, at minute 17 of each hour (UTC; scheduling may be delayed), or manually via `Actions → Read-only market snapshot → Run workflow`. It reads public Kalshi markets, reruns unit tests, generates a JSONL observation file plus static HTML report, and uploads them as a seven-day artifact.
 
-First smoke test: open the repository's **Actions** tab -> **Read-only market snapshot** -> **Run workflow**. Open the finished workflow run and download `alpha-snapshot-*` under **Artifacts**. Open `dashboard.html` locally to view the snapshot. A passing run proves the public API and workflow function; it does **not** establish an executable trade or profit.
+**Inspect results:** Open [Actions](https://github.com/jimmarkunas/get-rich-or-die-trying/actions), choose a completed **Read-only market snapshot**, download the `alpha-snapshot-*` artifact under Artifacts, and open `dashboard.html` locally.
 
-**Limitations:** GitHub Actions isn't a low-latency execution environment. Scheduled runs may be delayed or skipped. Each run starts a new snapshot—there is no cross-run persistent history yet. Use a persistent data store on a dedicated host only once the observation pipeline is live-verified. Do not add any Kalshi account keys, wallet seed phrases, or private keys to this pilot. The Aave and flash-AMM modules need an Ethereum RPC URL and manually verified targets and are **not** included in the scheduled workflow.
+**Pilot acceptance:** A successful live run with a valid public API response and dashboard artifact confirms the read-only data pipeline, **not** a profitable trade. Check individual error and classification counts in the logs. A healthy heartbeat is not a candidate trade. Only the Kalshi pilot runs on GitHub Actions; Aave and AMM scanners remain configuration-driven and inactive without a verified RPC and target list.
 
-Alternative: push from a Mac after creating an **empty** repository:
-
-```bash
-cd automated-alpha
-git init -b main
-git add .
-git commit -m "Initialize Automated Alpha read-only scanners"
-git remote add origin https://github.com/jimmarkunas/automated-alpha.git
-git push -u origin main
-```
-
-No trading automation or live-money transaction execution exists in this repository. **No production deployment of other projects is performed.**
+**Next:** discover settlement-verified event baskets, persist snapshots across runs, validate fee rules and executable depth, then separately instrument DeFi data. Keep any real trade execution behind explicit approval; this project contains no trading sender.
