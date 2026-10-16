@@ -3,6 +3,12 @@ name: Read-only market snapshot
 # First deployment gate: public Kalshi API diagnostics only.
 # NO account auth, no orders, no blockchain transactions, no secrets.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'alpha/**'
+      - 'config.example.json'
+      - '.github/workflows/read-only-scan.yml'
   workflow_dispatch:
   schedule:
     # Deliberately offset from minute zero. GitHub schedules may be delayed.
