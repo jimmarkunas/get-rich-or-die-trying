@@ -61,8 +61,13 @@ def parse_candle(row):
         raise ValueError('non-positive price or negative volume')
     if high < max(opening, close) or low > min(opening, close):
         raise ValueError('inconsistent OHLC')
-    if int(row[6]) != ts + HOUR_MS - 1:
-        raise ValueError('invalid Kline closing timestamp')
+    # Do not hard-code inclusive-vs-exclusive close-time conventions: the
+    # authoritative completeness check is the requested UTC cutoff and
+    # verified sequence of hourly OPEN timestamps in fetch_candles().
+    # Still reject malformed or wildly out-of-interval close metadata.
+    close_time = int(row[6])
+    if not ts <= close_time <= ts + HOUR_MS:
+        raise ValueError(f'invalid Kline close_time delta_ms={close_time-ts}')
     return Candle(ts, opening, high, low, close, volume)
 
 

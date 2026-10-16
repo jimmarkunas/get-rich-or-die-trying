@@ -31,7 +31,7 @@ class TestCryptoData(TestCase):
         self.assertEqual(parse_candle(raw(b)),b)
 
     def test_incomplete_ohlc_invalid(self):
-        b=raw(fake_candles(1)[0]);b[6]=b[0]
+        b=raw(fake_candles(1)[0]);b[6]=b[0]-1
         with self.assertRaises(ValueError):parse_candle(b)
 
     def test_non_finite_price_rejected(self):
@@ -234,3 +234,13 @@ class TestPaperCliStateBootstrapping(TestCase):
                            '--observations',str(Path(d)/'observations.jsonl')])
             self.assertEqual(code,0)
             self.assertIsNone(run.call_args.args[0])
+
+class TestHourlyCloseTimestampVariants(TestCase):
+    def test_close_time_can_be_exclusive_end_timestamp(self):
+        row=raw(fake_candles(1)[0]);row[6]=row[0]+HOUR_MS
+        self.assertEqual(parse_candle(row).timestamp_ms,row[0])
+
+    def test_close_time_cannot_refer_to_distant_future(self):
+        row=raw(fake_candles(1)[0]);row[6]=row[0]+24*HOUR_MS
+        with self.assertRaisesRegex(ValueError,'delta_ms='):
+            parse_candle(row)
