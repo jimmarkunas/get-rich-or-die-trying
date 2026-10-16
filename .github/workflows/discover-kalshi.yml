@@ -1,0 +1,93 @@
+name: Kalshi read-only exclusive-event discovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/discover-kalshi.yml'
+      - 'alpha/discovery.py'
+      - 'alpha/archive.py'
+  workflow_dispatch:
+  schedule:
+    - cron: '37 * * * *'
+
+# Only public Kalshi GETs. Writes research logs to a separate Git history branch;
+# creates REVIEW REQUIRED issues on newly identified, positive screen results.
+# No order placement, API trading key, deposits or blockchain transactions.
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: automated-alpha-kalshi-archive
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit test all modules
+        run: python -m unittest discover -s tests -v
+      - name: Discover exclusive events and price two-NO lower bounds (GET only)
+        run: python -m alpha discover --ledger output/discovery.jsonl --pages 2 --max-events 12 --quantity 10
+      - name: Fetch history from isolated Git branch
+        run: |
+          set -euo pipefail
+          git fetch origin alpha-history:refs/remotes/origin/alpha-history
+          mkdir -p output
+          git show origin/alpha-history:history/observations.jsonl > output/previous.jsonl || :
+          git show origin/alpha-history:history/alert-state.json > output/previous-state.json || printf '{}\n' > output/previous-state.json
+      - name: Update persisted history and candidate issue draft
+        env:
+          RUN_LINK: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python -m alpha.archive \
+            --previous output/previous.jsonl \
+            --current output/discovery.jsonl \
+            --previous-state output/previous-state.json \
+            --history-out output/merged.jsonl \
+            --state-out output/new-state.json \
+            --issue-out output/issue.json \
+            --run-url "$RUN_LINK"
+          python -m alpha report --ledger output/merged.jsonl --out output/dashboard.html
+      - name: Persist research ledger on alpha-history, NOT on main
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/alpha-history" origin/alpha-history
+          mkdir -p "$RUNNER_TEMP/alpha-history/history"
+          cp output/merged.jsonl "$RUNNER_TEMP/alpha-history/history/observations.jsonl"
+          cp output/new-state.json "$RUNNER_TEMP/alpha-history/history/alert-state.json"
+          git -C "$RUNNER_TEMP/alpha-history" config user.name 'github-actions[bot]'
+          git -C "$RUNNER_TEMP/alpha-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$RUNNER_TEMP/alpha-history" add history/
+          if ! git -C "$RUNNER_TEMP/alpha-history" diff --cached --quiet; then
+            git -C "$RUNNER_TEMP/alpha-history" commit -m 'data: append read-only Kalshi discovery observations'
+            git -C "$RUNNER_TEMP/alpha-history" push origin HEAD:alpha-history
+          fi
+      - name: Raise a GitHub issue for NEW candidates only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if python -c 'import json; d=json.load(open("output/issue.json")); exit(0 if d.get("title") and d.get("body") else 1)'; then
+            gh api "repos/$GH_REPO/issues" --method POST --input output/issue.json > output/created-issue.json
+          else
+            echo 'No new positive screening candidates; no issue created.'
+          fi
+      - name: Publish observations, alerts and HTML dashboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kalshi-discovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            output/discovery.jsonl
+            output/dashboard.html
+            output/issue.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -8,6 +8,7 @@ from pathlib import Path
 from .common import write_observations
 from .defi import scan_aave, scan_flash_amm
 from .kalshi import scan_kalshi
+from .discovery import scan_exclusive_events
 from .report import render_report
 
 
@@ -50,10 +51,28 @@ def main(argv=None):
     scan.add_argument('--ledger',default='output/opportunities.jsonl')
     scan.add_argument('--interval-seconds',type=int,default=0,help='repeat; minimum 60 seconds')
     scan.add_argument('--cycles',type=int,default=1,help='number of scans when interval enabled; 0=infinite')
+    discover=sub.add_parser('discover',help='automatic read-only exclusive-event NO/NO research')
+    discover.add_argument('--ledger',default='output/discovery.jsonl')
+    discover.add_argument('--quantity',type=int,default=10)
+    discover.add_argument('--pages',type=int,default=2)
+    discover.add_argument('--max-events',type=int,default=12)
+    discover.add_argument('--max-pairs-per-event',type=int,default=2)
+    discover.add_argument('--series',default=None)
     report=sub.add_parser('report',help='produce local static HTML dashboard')
     report.add_argument('--ledger',default='output/opportunities.jsonl')
     report.add_argument('--out',default='output/dashboard.html')
     args=parser.parse_args(argv)
+    if args.command=='discover':
+        try:
+            records,errors=scan_exclusive_events(quantity=args.quantity,max_pages=args.pages,
+                max_events=args.max_events,max_pairs_per_event=args.max_pairs_per_event,series=args.series)
+            write_observations(args.ledger,records)
+            print(json.dumps({'observations':len(records),'errors':errors,
+                'review_candidates':sum(o.classification=='candidate_rule_review_required' for o in records)},indent=2))
+            return 1 if errors else 0
+        except Exception as exc:
+            print(f'discover: {type(exc).__name__}: {exc}',file=sys.stderr)
+            return 1
     if args.command=='report':
         n=render_report(args.ledger,args.out)
         print(f'Generated {args.out} ({n} observations)')
