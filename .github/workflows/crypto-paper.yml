@@ -8,8 +8,15 @@ on:
       - 'alpha/crypto_*.py'
       - '.github/workflows/crypto-paper.yml'
       - 'tests/test_crypto.py'
+      - 'tests/test_crypto_health.py'
   schedule:
     - cron: '13 * * * *'
+  # Recover when the :13 scheduled event is dropped, using an independent
+  # read-only workflow completion. Runs are idempotent for the same closed bar.
+  workflow_run:
+    workflows: [Read-only market snapshot]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
@@ -47,7 +54,7 @@ jobs:
         # Preserve transparency: scheduled hourly tests are purposely bounded;
         # the external-fetch backtest only runs at 05 UTC or on a push/manual run.
         run: |
-          if [ '${{ github.event_name }}' != 'schedule' ] || [ "$(date -u +%H)" = '05' ]; then
+          if [ '${{ github.event_name }}' = 'workflow_dispatch' ] || [ '${{ github.event_name }}' = 'push' ] || [ "$(date -u +%H)" = '05' ]; then
             python -m alpha.crypto_cli backtest --days 90 --out output/crypto-backtest.json
           else
             echo 'Backtest runs on publish/manual and once daily near 05 UTC.'
