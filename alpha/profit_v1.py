@@ -32,12 +32,18 @@ MIN_SIGNAL_USD = Decimal("0.50")
 MAX_SCAN_SECONDS = 12
 BITNOMIAL = "https://bitnomial.com/exchange/api/v1/funding-rates/estimated/BTCUC"
 BITNOMIAL_ALTERNATE = "https://bitnomial.com/exchange/api/v1/prod/funding-rates/estimated/BTCUC"
+# Base symbols from Bitnomial US product listings. All estimates stay read-only.
+FUNDING_CONTRACTS = {"BTCUC": ("BTC", Decimal("0.01")),
+                     "ETHUI": ("ETH", Decimal("0.5")),
+                     "SOLUS": ("SOL", Decimal("5"))}
 ALLOW = {
     "api.binance.us": ("/api/v3/depth",),
     "api.kraken.com": ("/0/public/Depth",),
     "api.exchange.coinbase.com": tuple("/products/" + v["coinbase_exchange"] + "/book" for v in SPOT_MARKETS.values()),
-    "bitnomial.com": ("/exchange/api/v1/funding-rates/estimated/BTCUC",
-                     "/exchange/api/v1/prod/funding-rates/estimated/BTCUC"),
+    "bitnomial.com": tuple(prefix + product
+                           for prefix in ("/exchange/api/v1/funding-rates/estimated/",
+                                          "/exchange/api/v1/prod/funding-rates/estimated/")
+                           for product in FUNDING_CONTRACTS),
 }
 ZERO = Decimal("0")
 
@@ -221,8 +227,11 @@ def assess_cross(coin, buy_venue, sell_venue, buy, sell, cash=TRADE_NOTIONAL,
     return payload
 
 
-def funding_observation(payload, cash=TRADE_NOTIONAL, *, observed_at=None, spot_reference=None):
+def funding_observation(payload, cash=TRADE_NOTIONAL, *, observed_at=None, spot_reference=None, product="BTCUC"):
     """US Bitnomial PRELIMINARY 8-hour funding estimate, not a future payment."""
+    if product not in FUNDING_CONTRACTS:
+        raise ValueError("unsupported US futures product")
+    coin, contract_units = FUNDING_CONTRACTS[product]
     observed_at = observed_at or datetime.now(timezone.utc)
     rate = dec(payload["funding_rate"])
     a = datetime.fromisoformat(payload["interval_start"].replace("Z", "+00:00"))
@@ -231,22 +240,23 @@ def funding_observation(payload, cash=TRADE_NOTIONAL, *, observed_at=None, spot_
         raise ValueError("funding interval stale or invalid")
     if abs(rate) > Decimal("0.05"):
         raise ValueError("implausible estimate")
-    # The smallest Bitnomial BTC centi perpetual is 0.01 BTC.
-    # A $150 fractional futures exposure is not tradable as one such contract.
-    min_spot_usd = dec(spot_reference) * Decimal("0.01") if spot_reference is not None else None
+    # All estimated funding uses the real minimum contractual underlying size.
+    # If spot reference unavailable, show no imaginary trade-size economics.
+    min_spot_usd = dec(spot_reference) * contract_units if spot_reference is not None else None
     # Clearinghouse indicates 15% baseline margin, FCM may demand more.
     min_margin_usd = min_spot_usd * Decimal("0.15") if min_spot_usd is not None else None
     min_total = min_spot_usd + min_margin_usd if min_spot_usd is not None else None
     blocked_capital = min_total is not None and min_total > CAPITAL_LIMIT
     # This is ONE 8-hour period, NOT an extrapolated daily guaranteed income.
-    income = dec(cash) * rate
+    income = min_spot_usd * rate if min_spot_usd is not None else None
     return {
-        "venue": "Bitnomial US", "product": "BTCUC", "type": "current_estimated_8h",
+        "venue": "Bitnomial US", "product": product, "base_coin": coin, "type": "current_estimated_8h",
         "estimated_rate": str(rate), "interval_start": payload["interval_start"],
-        "interval_end": payload["interval_end"], "notional_usd": money(cash),
-        "estimated_gross_one_interval_usd": money(income),
+        "interval_end": payload["interval_end"], "minimum_contract_notional_usd": money(min_spot_usd) if min_spot_usd is not None else None,
+        "estimated_gross_one_interval_usd": money(income) if income is not None else None,
         "net_usd": None, "verified_profit_usd": None,
-        "minimum_futures_contract_btc": "0.01",
+        "minimum_futures_contract_btc": "0.01" if coin == "BTC" else None,
+        "minimum_futures_contract_units": str(contract_units),
         "minimum_spot_hedge_usd": money(min_spot_usd) if min_spot_usd is not None else None,
         "indicative_minimum_futures_margin_15pct_usd": money(min_margin_usd) if min_margin_usd is not None else None,
         "indicative_total_cash_before_costs_usd": money(min_total) if min_total is not None else None,
@@ -268,7 +278,7 @@ def scan(*, spot_fetch=fetch_spot, get=public_get, monotonic=time.monotonic):
            "eligibility": {"binance_us": "Illinois listed, Texas unsupported; individual and LLC approval unverified",
                            "kraken_us_futures": "US product available, state/identity/product verification required",
                            "coinbase_us_derivatives": "US product exists; customer access and API not verified"}}
-    btc_reference = None
+    spot_references = {}
     for coin in SPOT_MARKETS:
         books = {}
         times = {}
@@ -280,9 +290,9 @@ def scan(*, spot_fetch=fetch_spot, get=public_get, monotonic=time.monotonic):
             except (KeyError, TypeError, ValueError, OSError, TimeoutError) as exc:
                 out["errors"].append({"coin": coin, "venue": venue, "error": type(exc).__name__,
                                       "description": str(exc)[:160]})
-        if coin == "BTC" and books:
+        if books:
             preferred = books.get("binance_us") or books.get("kraken") or next(iter(books.values()))
-            btc_reference = preferred["book"]["asks"][0][0]
+            spot_references[coin] = preferred["book"]["asks"][0][0]
         for buy in books:
             for sell in books:
                 if buy == sell:
@@ -290,21 +300,21 @@ def scan(*, spot_fetch=fetch_spot, get=public_get, monotonic=time.monotonic):
                 gap = max(times[buy][1], times[sell][1]) - min(times[buy][0], times[sell][0])
                 out["spread_scenarios"].append(
                     assess_cross(coin, buy, sell, books[buy], books[sell], fetch_gap_seconds=gap))
-    try:
+    for product, (coin, units) in FUNDING_CONTRACTS.items():
         try:
-            funding_data = get(BITNOMIAL)
-            funding_endpoint = BITNOMIAL
-        except OSError:
-            # Documentation shows two incompatible public path prefixes.
-            # Try both, but NEVER substitute an offshore exchange rate.
-            funding_data = get(BITNOMIAL_ALTERNATE)
-            funding_endpoint = BITNOMIAL_ALTERNATE
-        obs = funding_observation(funding_data, spot_reference=btc_reference)
-        obs["source_url"] = funding_endpoint
-        out["funding_scenarios"].append(obs)
-    except (KeyError, TypeError, ValueError, OSError, TimeoutError) as exc:
-        out["errors"].append({"venue": "bitnomial_us", "error": type(exc).__name__,
-                              "description": str(exc)[:160], "funding_verified": False})
+            try:
+                endpoint = BITNOMIAL.replace("BTCUC", product)
+                funding_data = get(endpoint)
+            except OSError:
+                endpoint = BITNOMIAL_ALTERNATE.replace("BTCUC", product)
+                funding_data = get(endpoint)
+            obs = funding_observation(funding_data, spot_reference=spot_references.get(coin), product=product)
+            obs["source_url"] = endpoint
+            out["funding_scenarios"].append(obs)
+        except (KeyError, TypeError, ValueError, OSError, TimeoutError) as exc:
+            out["errors"].append({"venue": "bitnomial_us", "product": product,
+                                  "error": type(exc).__name__, "description": str(exc)[:160],
+                                  "funding_verified": False})
     out["completed_at_utc"] = utc_now()
     out["elapsed_seconds"] = round(monotonic() - start, 3)
     out["positive_indicative_unverified"] = sum(

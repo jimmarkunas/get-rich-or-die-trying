@@ -51,6 +51,9 @@ jobs:
               s['us_funding']=[{'product':x['product'],'estimated_rate':x['estimated_rate'],
                   'estimated_gross_one_interval_usd':x['estimated_gross_one_interval_usd'],
                   'minimum_futures_contract_btc':x.get('minimum_futures_contract_btc'),
+                  'base_coin':x.get('base_coin'),
+                  'minimum_futures_contract_units':x.get('minimum_futures_contract_units'),
+                  'minimum_contract_notional_usd':x.get('minimum_contract_notional_usd'),
                   'indicative_total_cash_before_costs_usd':x.get('indicative_total_cash_before_costs_usd'),
                   'status':x['status'],'verified_profit_usd':None} for x in d['funding_scenarios']]
           else:

@@ -144,7 +144,7 @@ class ProfitReadOnlyTests(unittest.TestCase):
         sample = funding("0.0001")
         x = funding_observation(sample)
         self.assertEqual(x["status"], "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_MARGIN_AND_ACCOUNT_ELIGIBILITY")
-        self.assertEqual(x["estimated_gross_one_interval_usd"], "0.015000")
+        self.assertIsNone(x["estimated_gross_one_interval_usd"])
         self.assertIsNone(x["net_usd"])
         self.assertIsNone(x["verified_profit_usd"])
 
@@ -159,9 +159,28 @@ class ProfitReadOnlyTests(unittest.TestCase):
         o = funding_observation(funding("0.0001"), spot_reference=Decimal("50000"))
         self.assertEqual(o["status"], "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_MARGIN_AND_ACCOUNT_ELIGIBILITY")
 
+    def test_small_sol_perp_fits_under_cash_ceiling_but_still_not_executable(self):
+        x = funding_observation(funding("0.0001"), spot_reference=Decimal("100"), product="SOLUS")
+        self.assertEqual(x["minimum_futures_contract_units"], "5")
+        self.assertEqual(x["minimum_contract_notional_usd"], "500.000000")
+        self.assertEqual(x["estimated_gross_one_interval_usd"], "0.050000")
+        self.assertEqual(x["indicative_total_cash_before_costs_usd"], "575.000000")
+        self.assertEqual(x["status"], "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_MARGIN_AND_ACCOUNT_ELIGIBILITY")
+        self.assertIsNone(x["net_usd"])
+
+    def test_eth_half_contract_exceeds_capital(self):
+        x = funding_observation(funding("0.0001"), spot_reference=Decimal("2400"), product="ETHUI")
+        self.assertEqual(x["minimum_futures_contract_units"], "0.5")
+        self.assertEqual(x["status"], "BLOCKED_MINIMUM_CONTRACT_PLUS_SPOT_HEDGE_EXCEEDS_CAPITAL")
+        self.assertEqual(x["indicative_total_cash_before_costs_usd"], "1380.000000")
+
+    def test_bad_us_futures_product_disallowed(self):
+        with self.assertRaises(ValueError):
+            funding_observation(funding(), product="BTCUSDT")
+
     def test_negative_funding_is_a_cost_for_short(self):
         x = funding_observation(funding("-0.0001"))
-        self.assertEqual(x["estimated_gross_one_interval_usd"], "-0.015000")
+        self.assertIsNone(x["estimated_gross_one_interval_usd"])
 
     def test_expired_funding_refused(self):
         now = datetime.now(timezone.utc)
@@ -178,7 +197,7 @@ class ProfitReadOnlyTests(unittest.TestCase):
             return book("101", "102") if venue == "kraken" else book("99", "100")
         obj = scan(spot_fetch=spot, get=lambda url: funding("0.0002"))
         self.assertEqual(len(obj["spread_scenarios"]), 18)
-        self.assertEqual(len(obj["funding_scenarios"]), 1)
+        self.assertEqual(len(obj["funding_scenarios"]), 3)
         self.assertEqual(obj["actual_earnings_usd"], 0)
         self.assertEqual(obj["live_orders"], 0)
         self.assertFalse(obj["trading_authorized"])
