@@ -4,6 +4,12 @@ name: Crypto paper health watchdog
 # GitHub scheduling is best-effort: this cannot guarantee an hourly run.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/crypto-health.yml'
+      - 'alpha/crypto_health.py'
+      - 'tests/test_crypto_health.py'
   schedule:
     - cron: '49 * * * *'
   workflow_run:
