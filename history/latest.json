@@ -1,24 +1,11 @@
 {
   "actual_earnings_usd": 0,
-  "errors": [
-    {
-      "coin": "BTC",
-      "description": "overlong public response",
-      "error": "ValueError",
-      "venue": "coinbase_exchange"
-    },
-    {
-      "description": "HTTP Error 404: Not Found",
-      "error": "HTTPError",
-      "funding_verified": false,
-      "venue": "bitnomial_us"
-    }
-  ],
-  "funding_observations": 0,
-  "generated_at_utc": "2026-10-17T19:46:21.912353+00:00",
+  "errors": [],
+  "funding_observations": 1,
+  "generated_at_utc": "2026-10-17T19:49:19.578424+00:00",
   "positive_unverified": 0,
   "real_trades": 0,
-  "run_url": "https://github.com/jimmarkunas/get-rich-or-die-trying/actions/runs/39063881530",
+  "run_url": "https://github.com/jimmarkunas/get-rich-or-die-trying/actions/runs/39064092686",
   "status": "SIMULATION_ONLY",
-  "total_spreads": 14
+  "total_spreads": 18
 }
