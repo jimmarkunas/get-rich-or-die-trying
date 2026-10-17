@@ -14,7 +14,7 @@ Sources: https://docs.kalshi.com/api-reference/incentive-programs/get-incentives
 
 ## Test phases
 
-1. **Discovery:** Four samples a day over 72 hours; public API only, 300 programs/page, max three pages and 12 orderbooks/scan, max $100 notional per hypothetical quote. Everything lives in separate `alpha-incentive-history` branch and downloadable GitHub Actions artifacts. Clock cadence is best-effort.
+1. **Discovery:** Four samples a day over 72 hours; public API only, 500 programs/page, max five pages and 16 orderbooks/scan (four fixed top-pool anchors plus up to twelve rotating every six hours), max $100 notional per hypothetical quote. Everything lives in separate `alpha-incentive-history` branch and downloadable GitHub Actions artifacts. Clock cadence is best-effort.
 2. **Screen:** Group by exact market, not event. Validate program dates/type and two-sided target depth; price a **hypothetical passive bid joining an existing level**. Report full modeled principal at risk, visible depth and missing facts. **Depth eligibility is not personal order eligibility**. Do not assert earnings based on reward pool amounts.
 3. **Decision after 72 hours:** Count scanned programs; how many different markets had visibly adequate two-sided depth in repeated samples; how often depth disappeared; capital required; competition risks; whether program reward units and Illinois/market eligibility were verified. If no consistently favorable books, stop. If some qualify, next step is richer public tick-level sampling and an explicit reward-vs-adverse-selection scenario model—not depositing money or automatic orders.
 
