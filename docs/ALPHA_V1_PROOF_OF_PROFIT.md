@@ -39,3 +39,10 @@ Tests: python -m unittest discover -s tests -v
 Scanner: python -m alpha.profit_v1 --out output/alpha-v1.json
 Scheduled GitHub research: .github/workflows/alpha-v1-profit.yml
 Persistent summary branch: alpha-v1-history / history/scans.jsonl
+
+## Hosted smoke-test findings and repair, 2026-10-17
+- Initial hosted GitHub run 39063881530: 14 spread scenarios, 0 positive, Coinbase BTC full L2 depth over safety cap, and Bitnomial first funding URL returned HTTP 404.
+- Fixed Coinbase to public Level-1 best bid/ask; insufficient top-book size rejects (never assumes deeper availability).
+- Bitnomial endpoint documentation contradicts itself about the /prod prefix. Try documented example path, then /prod on transport error; if both unavailable, record explicit funding-source failure. No overseas-data substitution.
+- Bitnomial BTC centi perpetual minimum **0.01 BTC**, confirmed via CFTC filing: https://bitnomial.com/exchange/regulatory/cftc/product-filings/26-036.pdf
+- At BTC $80,000, cash spot hedge for 0.01 BTC costs $800. The exchange clearinghouse baseline of 15% (estimate, FCM may require more) brings spot + derivatives margin to **at least ~$920 before fees**, exceeding our $900 simulation cap. This is a blocker even if the rate API works; another, smaller contract could change eligibility but requires separate review.
