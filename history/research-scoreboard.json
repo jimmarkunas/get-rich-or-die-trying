@@ -3,10 +3,10 @@
     "aave_discovery": {
       "best_indicative_net_usd": null,
       "classes": {
-        "aave_heartbeat": 1,
-        "health_ok_or_zero_debt": 8
+        "aave_heartbeat": 2,
+        "health_ok_or_zero_debt": 17
       },
-      "observations": 9,
+      "observations": 19,
       "positive_candidates_not_executable": 0,
       "proven_realized_profit_usd": null,
       "validated_atomic_fills": 0,
@@ -15,10 +15,10 @@
     "dex_discovery": {
       "best_indicative_net_usd": null,
       "classes": {
-        "dex_heartbeat": 2,
-        "no_positive_margin": 2
+        "dex_heartbeat": 4,
+        "no_positive_margin": 4
       },
-      "observations": 4,
+      "observations": 8,
       "positive_candidates_not_executable": 0,
       "proven_realized_profit_usd": null,
       "validated_atomic_fills": 0,
@@ -28,7 +28,7 @@
   "incomplete_history_possible": true,
   "lookback_days": 7,
   "no_actual_trading_performed": true,
-  "observations": 13,
+  "observations": 27,
   "real_profit_or_trade_fills_not_proven": true,
   "sampled_sources_this_run": 3
 }
