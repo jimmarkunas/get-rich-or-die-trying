@@ -1,0 +1,83 @@
+name: Automated Alpha v1 proof-of-profit (READ ONLY)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['alpha/profit_v1.py', 'tests/test_profit_v1.py', '.github/workflows/alpha-v1-profit.yml']
+  schedule:
+    - cron: '27 * * * *'
+permissions:
+  contents: write
+concurrency:
+  group: automated-alpha-v1-research
+  cancel-in-progress: false
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Full regression suite (no network)
+        run: python -m unittest discover -s tests -v
+      - name: Spot order-book + US funding public observations
+        run: python -m alpha.profit_v1 --out output/alpha-v1.json
+      - name: Prepare summary even on scan failure
+        if: always()
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path('output/alpha-v1.json')
+          if p.exists():
+              d=json.loads(p.read_text())
+              s={'generated_at_utc':d['generated_at_utc'],'run_url':os.environ['RUN_URL'],
+                 'total_spreads':len(d['spread_scenarios']),
+                 'positive_unverified':d['positive_indicative_unverified'],
+                 'funding_observations':len(d['funding_scenarios']),
+                 'errors':d['errors'],'real_trades':0,'actual_earnings_usd':0,
+                 'status':'SIMULATION_ONLY'}
+          else:
+              s={'run_url':os.environ['RUN_URL'],'status':'FAILED','real_trades':0,'actual_earnings_usd':0}
+          pathlib.Path('output').mkdir(exist_ok=True)
+          pathlib.Path('output/summary.json').write_text(json.dumps(s,indent=2,sort_keys=True)+'\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('## Automated Alpha v1 — read-only\n')
+              f.write('No money earned, no orders, no executable profit proven.\n\n')
+              f.write(json.dumps(s,indent=2)+'\n')
+          PY
+      - name: Persist independent audit history
+        if: success()
+        run: |
+          set -euo pipefail
+          git fetch origin alpha-v1-history:refs/remotes/origin/alpha-v1-history
+          git worktree add --detach "$RUNNER_TEMP/alpha-v1-history" origin/alpha-v1-history
+          mkdir -p "$RUNNER_TEMP/alpha-v1-history/history"
+          cp output/summary.json "$RUNNER_TEMP/alpha-v1-history/history/latest.json"
+          cat "$RUNNER_TEMP/alpha-v1-history/history/scans.jsonl" 2>/dev/null > output/old.jsonl || :
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          old=[x for x in Path('output/old.jsonl').read_text().splitlines() if x.strip()]
+          old.append(json.dumps(json.loads(Path('output/summary.json').read_text()),sort_keys=True))
+          Path('output/merged.jsonl').write_text('\n'.join(old[-2000:])+'\n')
+          PY
+          cp output/merged.jsonl "$RUNNER_TEMP/alpha-v1-history/history/scans.jsonl"
+          git -C "$RUNNER_TEMP/alpha-v1-history" config user.name 'github-actions[bot]'
+          git -C "$RUNNER_TEMP/alpha-v1-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$RUNNER_TEMP/alpha-v1-history" add history/latest.json history/scans.jsonl
+          git -C "$RUNNER_TEMP/alpha-v1-history" commit -m 'data: append read-only proof validation'
+          git -C "$RUNNER_TEMP/alpha-v1-history" push origin HEAD:alpha-v1-history
+      - name: Archive observations (including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            output/alpha-v1.json
+            output/summary.json
+          retention-days: 30
+          if-no-files-found: warn
