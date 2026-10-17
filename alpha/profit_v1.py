@@ -30,12 +30,14 @@ REBALANCE_RATE = Decimal("0.003")    # 30 bps estimated future inventory rebalan
 LATENCY_BUFFER = Decimal("0.001")    # 10 bps two-venue execution uncertainty
 MIN_SIGNAL_USD = Decimal("0.50")
 MAX_SCAN_SECONDS = 12
-BITNOMIAL = "https://bitnomial.com/exchange/api/v1/prod/funding-rates/estimated/BTCUC"
+BITNOMIAL = "https://bitnomial.com/exchange/api/v1/funding-rates/estimated/BTCUC"
+BITNOMIAL_ALTERNATE = "https://bitnomial.com/exchange/api/v1/prod/funding-rates/estimated/BTCUC"
 ALLOW = {
     "api.binance.us": ("/api/v3/depth",),
     "api.kraken.com": ("/0/public/Depth",),
     "api.exchange.coinbase.com": tuple("/products/" + v["coinbase_exchange"] + "/book" for v in SPOT_MARKETS.values()),
-    "bitnomial.com": ("/exchange/api/v1/prod/funding-rates/estimated/BTCUC",),
+    "bitnomial.com": ("/exchange/api/v1/funding-rates/estimated/BTCUC",
+                     "/exchange/api/v1/prod/funding-rates/estimated/BTCUC"),
 }
 ZERO = Decimal("0")
 
@@ -120,7 +122,9 @@ def fetch_spot(coin, venue, *, get=public_get):
         params = {"pair": symbol, "count": 20}
     else:
         endpoint = "https://api.exchange.coinbase.com/products/" + symbol + "/book"
-        params = {"level": 2}
+        # Level-2 BTC can exceed response safety cap; BBO level 1 is bounded.
+        # Reject if top-of-book depth is insufficient; no fabricated deeper fills.
+        params = {"level": 1}
     start = time.monotonic()
     book = parse_book(venue, get(endpoint, params=params))
     return {
@@ -217,7 +221,7 @@ def assess_cross(coin, buy_venue, sell_venue, buy, sell, cash=TRADE_NOTIONAL,
     return payload
 
 
-def funding_observation(payload, cash=TRADE_NOTIONAL, *, observed_at=None):
+def funding_observation(payload, cash=TRADE_NOTIONAL, *, observed_at=None, spot_reference=None):
     """US Bitnomial PRELIMINARY 8-hour funding estimate, not a future payment."""
     observed_at = observed_at or datetime.now(timezone.utc)
     rate = dec(payload["funding_rate"])
@@ -227,6 +231,13 @@ def funding_observation(payload, cash=TRADE_NOTIONAL, *, observed_at=None):
         raise ValueError("funding interval stale or invalid")
     if abs(rate) > Decimal("0.05"):
         raise ValueError("implausible estimate")
+    # The smallest Bitnomial BTC centi perpetual is 0.01 BTC.
+    # A $150 fractional futures exposure is not tradable as one such contract.
+    min_spot_usd = dec(spot_reference) * Decimal("0.01") if spot_reference is not None else None
+    # Clearinghouse indicates 15% baseline margin, FCM may demand more.
+    min_margin_usd = min_spot_usd * Decimal("0.15") if min_spot_usd is not None else None
+    min_total = min_spot_usd + min_margin_usd if min_spot_usd is not None else None
+    blocked_capital = min_total is not None and min_total > CAPITAL_LIMIT
     # This is ONE 8-hour period, NOT an extrapolated daily guaranteed income.
     income = dec(cash) * rate
     return {
@@ -235,7 +246,12 @@ def funding_observation(payload, cash=TRADE_NOTIONAL, *, observed_at=None):
         "interval_end": payload["interval_end"], "notional_usd": money(cash),
         "estimated_gross_one_interval_usd": money(income),
         "net_usd": None, "verified_profit_usd": None,
-        "status": "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_SIZE_MARGIN_AND_ACCOUNT_ELIGIBILITY",
+        "minimum_futures_contract_btc": "0.01",
+        "minimum_spot_hedge_usd": money(min_spot_usd) if min_spot_usd is not None else None,
+        "indicative_minimum_futures_margin_15pct_usd": money(min_margin_usd) if min_margin_usd is not None else None,
+        "indicative_total_cash_before_costs_usd": money(min_total) if min_total is not None else None,
+        "status": "BLOCKED_MINIMUM_CONTRACT_PLUS_SPOT_HEDGE_EXCEEDS_CAPITAL" if blocked_capital
+                  else "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_MARGIN_AND_ACCOUNT_ELIGIBILITY",
         "warning": "Future funding not guaranteed; sign can reverse; futures prices, costs, margin and precise matching spot hedge unknown.",
         "action": "NO_ORDER",
     }
@@ -248,9 +264,11 @@ def scan(*, spot_fetch=fetch_spot, get=public_get, monotonic=time.monotonic):
            "actual_earnings_usd": 0, "trading_authorized": False,
            "spread_scenarios": [], "funding_scenarios": [], "errors": [],
            "funding_public_source": "https://bitnomial.com/exchange/docs/api/rest/funding-rates/",
+           "funding_contract_size_source": "https://bitnomial.com/exchange/regulatory/cftc/product-filings/26-036.pdf",
            "eligibility": {"binance_us": "Illinois listed, Texas unsupported; individual and LLC approval unverified",
                            "kraken_us_futures": "US product available, state/identity/product verification required",
                            "coinbase_us_derivatives": "US product exists; customer access and API not verified"}}
+    btc_reference = None
     for coin in SPOT_MARKETS:
         books = {}
         times = {}
@@ -262,6 +280,9 @@ def scan(*, spot_fetch=fetch_spot, get=public_get, monotonic=time.monotonic):
             except (KeyError, TypeError, ValueError, OSError, TimeoutError) as exc:
                 out["errors"].append({"coin": coin, "venue": venue, "error": type(exc).__name__,
                                       "description": str(exc)[:160]})
+        if coin == "BTC" and books:
+            preferred = books.get("binance_us") or books.get("kraken") or next(iter(books.values()))
+            btc_reference = preferred["book"]["asks"][0][0]
         for buy in books:
             for sell in books:
                 if buy == sell:
@@ -270,7 +291,17 @@ def scan(*, spot_fetch=fetch_spot, get=public_get, monotonic=time.monotonic):
                 out["spread_scenarios"].append(
                     assess_cross(coin, buy, sell, books[buy], books[sell], fetch_gap_seconds=gap))
     try:
-        out["funding_scenarios"].append(funding_observation(get(BITNOMIAL)))
+        try:
+            funding_data = get(BITNOMIAL)
+            funding_endpoint = BITNOMIAL
+        except OSError:
+            # Documentation shows two incompatible public path prefixes.
+            # Try both, but NEVER substitute an offshore exchange rate.
+            funding_data = get(BITNOMIAL_ALTERNATE)
+            funding_endpoint = BITNOMIAL_ALTERNATE
+        obs = funding_observation(funding_data, spot_reference=btc_reference)
+        obs["source_url"] = funding_endpoint
+        out["funding_scenarios"].append(obs)
     except (KeyError, TypeError, ValueError, OSError, TimeoutError) as exc:
         out["errors"].append({"venue": "bitnomial_us", "error": type(exc).__name__,
                               "description": str(exc)[:160], "funding_verified": False})
