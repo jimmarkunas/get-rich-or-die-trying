@@ -1,0 +1,91 @@
+name: Crypto paper health watchdog
+
+# Independent snapshot completions provide a second trigger path.
+# GitHub scheduling is best-effort: this cannot guarantee an hourly run.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '49 * * * *'
+  workflow_run:
+    workflows:
+      - Read-only market snapshot
+      - Crypto spot paper research (no trading)
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+
+# One history writer at a time, including the crypto paper producer.
+concurrency:
+  group: automated-alpha-crypto-paper
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test read-only modules
+        run: python -m unittest discover -s tests -q
+      - name: Read persisted paper state and previous health
+        run: |
+          set -euo pipefail
+          git fetch origin alpha-crypto-history:refs/remotes/origin/alpha-crypto-history
+          mkdir -p output
+          git show origin/alpha-crypto-history:history/paper-state.json > output/watched-state.json
+          git show origin/alpha-crypto-history:history/health-state.json > output/previous-health.json || printf '{}\n' > output/previous-health.json
+      - name: Compute strict state-based freshness and transition
+        run: |
+          python -m alpha.crypto_health \
+            --state output/watched-state.json \
+            --previous-health output/previous-health.json \
+            --max-lag-hours 2 \
+            --out output/new-health.json \
+            --notice output/health-notice.md
+          cat output/new-health.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Persist health on research branch (not main)
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/crypto-history" origin/alpha-crypto-history
+          mkdir -p "$RUNNER_TEMP/crypto-history/history"
+          cp output/new-health.json "$RUNNER_TEMP/crypto-history/history/health-state.json"
+          git -C "$RUNNER_TEMP/crypto-history" config user.name 'github-actions[bot]'
+          git -C "$RUNNER_TEMP/crypto-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$RUNNER_TEMP/crypto-history" add history/health-state.json
+          if ! git -C "$RUNNER_TEMP/crypto-history" diff --cached --quiet; then
+            git -C "$RUNNER_TEMP/crypto-history" commit -m 'health: record crypto paper freshness'
+            git -C "$RUNNER_TEMP/crypto-history" push origin HEAD:alpha-crypto-history
+          fi
+      - name: Comment on tracking issue ONLY on health transition
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -s output/health-notice.md ]; then
+            gh issue comment 10 --body-file output/health-notice.md
+          else
+            echo 'No health status transition; no duplicate comment.'
+          fi
+      - name: Archive health evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crypto-health-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            output/new-health.json
+            output/health-notice.md
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Fail on stale or invalid monitoring state
+        run: |
+          python - <<'PY'
+          import json
+          status = json.load(open('output/new-health.json'))['status']
+          if status != 'healthy':
+              raise SystemExit('Crypto paper freshness: ' + status)
+          PY
