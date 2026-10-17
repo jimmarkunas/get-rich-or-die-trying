@@ -1,0 +1,83 @@
+name: Kalshi incentive feasibility (no orders)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'alpha/incentive_research.py'
+      - '.github/workflows/kalshi-incentive-research.yml'
+      - 'tests/test_incentive_research.py'
+  schedule:
+    # Four bounded observations/day over a 72h experiment; GitHub schedule is best-effort.
+    - cron: '29 2,8,14,20 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kalshi-incentive-readonly-history
+  cancel-in-progress: false
+
+jobs:
+  feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Bound the data-collection pilot to 72 hours
+        id: pilot
+        run: |
+          if [ "$(date -u +%s)" -le "$(date -u -d '2026-10-20T08:00:00Z' +%s)" ]; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo 'Read-only pilot expired; no incentive scan or history write.'
+          fi
+      - name: All unit tests, including incentive safety tests
+        if: steps.pilot.outputs.active == 'true'
+        run: python -m unittest discover -s tests -q
+      - name: Query public incentive programs and public orderbooks (GET only)
+        if: steps.pilot.outputs.active == 'true'
+        run: |
+          python -m alpha.incentive_research \
+            --pages 3 --page-size 300 --max-books 12 --budget 100 \
+            --max-contracts 50 --out output/kalshi-incentives.json
+      - name: Persist limited experiment history on isolated branch
+        if: steps.pilot.outputs.active == 'true' && success()
+        run: |
+          set -euo pipefail
+          git fetch origin alpha-incentive-history:refs/remotes/origin/alpha-incentive-history
+          git worktree add --detach "$RUNNER_TEMP/incentive-history" origin/alpha-incentive-history
+          mkdir -p "$RUNNER_TEMP/incentive-history/history"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cur=json.loads(Path('output/kalshi-incentives.json').read_text())
+          entry={key:cur[key] for key in ('observed_at_utc','programs_available','distinct_markets_available',
+              'distinct_markets_sampled','programs_analyzed','feasible_visible_joins',
+              'truncated_market_selection','pagination','errors')}
+          entry['no_orders_placed']=True
+          entry['verified_personal_income_usd']=0
+          log=Path(__import__('os').environ['RUNNER_TEMP'])/'incentive-history/history/scans.jsonl'
+          existing=log.read_text(encoding='utf-8').splitlines() if log.exists() else []
+          log.write_text('\n'.join((existing+[json.dumps(entry,sort_keys=True)])[-100:])+'\n',encoding='utf-8')
+          PY
+          git -C "$RUNNER_TEMP/incentive-history" config user.name 'github-actions[bot]'
+          git -C "$RUNNER_TEMP/incentive-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$RUNNER_TEMP/incentive-history" add history/scans.jsonl
+          if ! git -C "$RUNNER_TEMP/incentive-history" diff --cached --quiet; then
+            git -C "$RUNNER_TEMP/incentive-history" commit -m 'data: observe public Kalshi reward feasibility, no orders'
+            git -C "$RUNNER_TEMP/incentive-history" push origin HEAD:alpha-incentive-history
+          fi
+      - name: Export unmodified raw analysis and readable summary
+        if: steps.pilot.outputs.active == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: incentive-feasibility-${{ github.run_id }}-${{ github.run_attempt }}
+          path: output/kalshi-incentives.json
+          if-no-files-found: warn
+          retention-days: 14
