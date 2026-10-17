@@ -28,15 +28,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Bound the data-collection pilot to 72 hours
+        id: pilot
+        run: |
+          if [ "$(date -u +%s)" -le "$(date -u -d '2026-10-20T08:00:00Z' +%s)" ]; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo 'Read-only pilot expired; no incentive scan or history write.'
+          fi
       - name: All unit tests, including incentive safety tests
+        if: steps.pilot.outputs.active == 'true'
         run: python -m unittest discover -s tests -q
       - name: Query public incentive programs and public orderbooks (GET only)
+        if: steps.pilot.outputs.active == 'true'
         run: |
           python -m alpha.incentive_research \
             --pages 3 --page-size 300 --max-books 12 --budget 100 \
             --max-contracts 50 --out output/kalshi-incentives.json
       - name: Persist limited experiment history on isolated branch
-        if: success()
+        if: steps.pilot.outputs.active == 'true' && success()
         run: |
           set -euo pipefail
           git fetch origin alpha-incentive-history:refs/remotes/origin/alpha-incentive-history
@@ -63,7 +74,7 @@ jobs:
             git -C "$RUNNER_TEMP/incentive-history" push origin HEAD:alpha-incentive-history
           fi
       - name: Export unmodified raw analysis and readable summary
-        if: always()
+        if: steps.pilot.outputs.active == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: incentive-feasibility-${{ github.run_id }}-${{ github.run_attempt }}
