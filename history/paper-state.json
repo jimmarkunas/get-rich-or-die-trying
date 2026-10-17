@@ -1,10 +1,10 @@
 {
   "symbols": {
     "BTCUSD": {
-      "last_closed_open_ms": 1792245600000,
+      "last_closed_open_ms": 1792256400000,
       "portfolios": {
         "grid": {
-          "bars": 5,
+          "bars": 6,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
@@ -20,7 +20,7 @@
           "wins": 0
         },
         "momentum": {
-          "bars": 5,
+          "bars": 6,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
@@ -38,14 +38,14 @@
       }
     },
     "ETHUSD": {
-      "last_closed_open_ms": 1792245600000,
+      "last_closed_open_ms": 1792256400000,
       "portfolios": {
         "grid": {
-          "bars": 5,
+          "bars": 6,
           "cash": "949.4234000946784000000000000",
           "cost_basis": "50.57659990532160000000000000",
           "entry_price": "2419.449120000000",
-          "exposure_bars": 5,
+          "exposure_bars": 6,
           "fees": "0.01011329732160000000000000",
           "losses": 0,
           "max_drawdown_pct": "0.04011746314450683805640360938",
@@ -57,7 +57,7 @@
           "wins": 0
         },
         "momentum": {
-          "bars": 5,
+          "bars": 6,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
@@ -75,17 +75,17 @@
       }
     },
     "SOLUSD": {
-      "last_closed_open_ms": 1792245600000,
+      "last_closed_open_ms": 1792256400000,
       "portfolios": {
         "grid": {
-          "bars": 5,
+          "bars": 6,
           "cash": "972.7659445769597800000000000",
           "cost_basis": "27.23405542304022000000000000",
           "entry_price": "104.392170000000",
-          "exposure_bars": 5,
+          "exposure_bars": 6,
           "fees": "0.00544572194022000000000000",
           "losses": 0,
-          "max_drawdown_pct": "0.02634103402628197671331839200",
+          "max_drawdown_pct": "0.02790584792883338127054522717",
           "peak_equity": "1000.106145176959780000000000",
           "slippage_cost": "0.0136075011000000000000",
           "trades": 1,
@@ -94,7 +94,7 @@
           "wins": 0
         },
         "momentum": {
-          "bars": 5,
+          "bars": 6,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
