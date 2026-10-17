@@ -17,9 +17,9 @@ permissions:
   contents: write
   issues: write
 
-# One history writer at a time, including the crypto paper producer.
+# Health state is written to its own branch; crypto paper history has a separate queue.
 concurrency:
-  group: automated-alpha-crypto-paper
+  group: automated-alpha-crypto-health
   cancel-in-progress: false
 
 jobs:
@@ -37,9 +37,10 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin alpha-crypto-history:refs/remotes/origin/alpha-crypto-history
+          git fetch origin alpha-health-history:refs/remotes/origin/alpha-health-history
           mkdir -p output
           git show origin/alpha-crypto-history:history/paper-state.json > output/watched-state.json
-          git show origin/alpha-crypto-history:history/health-state.json > output/previous-health.json || printf '{}\n' > output/previous-health.json
+          git show origin/alpha-health-history:history/health-state.json > output/previous-health.json || printf '{}\n' > output/previous-health.json
       - name: Compute strict state-based freshness and transition
         run: |
           python -m alpha.crypto_health \
@@ -49,18 +50,18 @@ jobs:
             --out output/new-health.json \
             --notice output/health-notice.md
           cat output/new-health.json >> "$GITHUB_STEP_SUMMARY"
-      - name: Persist health on research branch (not main)
+      - name: Persist health on separate health branch (not paper state)
         run: |
           set -euo pipefail
-          git worktree add --detach "$RUNNER_TEMP/crypto-history" origin/alpha-crypto-history
-          mkdir -p "$RUNNER_TEMP/crypto-history/history"
-          cp output/new-health.json "$RUNNER_TEMP/crypto-history/history/health-state.json"
-          git -C "$RUNNER_TEMP/crypto-history" config user.name 'github-actions[bot]'
-          git -C "$RUNNER_TEMP/crypto-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git -C "$RUNNER_TEMP/crypto-history" add history/health-state.json
-          if ! git -C "$RUNNER_TEMP/crypto-history" diff --cached --quiet; then
-            git -C "$RUNNER_TEMP/crypto-history" commit -m 'health: record crypto paper freshness'
-            git -C "$RUNNER_TEMP/crypto-history" push origin HEAD:alpha-crypto-history
+          git worktree add --detach "$RUNNER_TEMP/crypto-health-history" origin/alpha-health-history
+          mkdir -p "$RUNNER_TEMP/crypto-health-history/history"
+          cp output/new-health.json "$RUNNER_TEMP/crypto-health-history/history/health-state.json"
+          git -C "$RUNNER_TEMP/crypto-health-history" config user.name 'github-actions[bot]'
+          git -C "$RUNNER_TEMP/crypto-health-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$RUNNER_TEMP/crypto-health-history" add history/health-state.json
+          if ! git -C "$RUNNER_TEMP/crypto-health-history" diff --cached --quiet; then
+            git -C "$RUNNER_TEMP/crypto-health-history" commit -m 'health: record crypto paper freshness'
+            git -C "$RUNNER_TEMP/crypto-health-history" push origin HEAD:alpha-health-history
           fi
       - name: Comment on tracking issue ONLY on health transition
         env:
