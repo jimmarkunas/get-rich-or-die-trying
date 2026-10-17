@@ -101,6 +101,21 @@ class IncentiveTests(unittest.TestCase):
         def get(url,params):return {'incentive_programs':[example()], 'next_cursor':'a' if 'cursor' not in params else 'b'}
         _,meta=active_incentives(pages=1,getter=get,now=NOW)
         self.assertTrue(meta['truncated_pagination'])
+    def test_rotation_covers_different_markets_without_losing_anchor(self):
+        programs=[example(ticker=f'KXTEST-{i:03}',ident=f'id-{i}') for i in range(10)]
+        def get(url,params=None):
+            if url.endswith('/incentive_programs'):return {'incentive_programs':programs,'next_cursor':None}
+            return book()
+        a=scan(getter=get,now=NOW,max_books=5)
+        b=scan(getter=get,now=NOW+timedelta(hours=6),max_books=5)
+        aa={x['market_ticker'] for x in a['samples']}
+        bb={x['market_ticker'] for x in b['samples']}
+        self.assertEqual(len(aa),5)
+        self.assertEqual(len(bb),5)
+        self.assertEqual(len(aa & bb),4)
+        self.assertEqual(a['sampling']['fixed_anchor_count'],4)
+        self.assertEqual(a['sampling']['rotating_count'],1)
+
     def test_period_reward_never_formatted_as_dollars(self):
         o=analyze_program(example(),book())
         self.assertNotIn('daily_revenue_usd',o)
