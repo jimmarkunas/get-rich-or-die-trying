@@ -40,6 +40,19 @@ jobs:
                  'funding_observations':len(d['funding_scenarios']),
                  'errors':d['errors'],'real_trades':0,'actual_earnings_usd':0,
                  'status':'SIMULATION_ONLY'}
+              good=[x for x in d['spread_scenarios'] if x.get('indicative_net_usd') is not None]
+              good.sort(key=lambda x:float(x['indicative_net_usd']),reverse=True)
+              s['top_3_spread_estimates']=[{'coin':x['coin'],'buy':x['buy'],'sell':x['sell'],
+                 'indicative_net_usd':x['indicative_net_usd'],'status':x['status'],
+                 'required_prefunding_usd_or_equivalent':x['required_prefunding_usd_or_equivalent'],
+                 'verified_profit_usd':None} for x in good[:3]]
+              s['spread_status_counts']={k:sum(x['status']==k for x in d['spread_scenarios'])
+                 for k in sorted(set(x['status'] for x in d['spread_scenarios']))}
+              s['us_funding']=[{'product':x['product'],'estimated_rate':x['estimated_rate'],
+                  'estimated_gross_one_interval_usd':x['estimated_gross_one_interval_usd'],
+                  'minimum_futures_contract_btc':x.get('minimum_futures_contract_btc'),
+                  'indicative_total_cash_before_costs_usd':x.get('indicative_total_cash_before_costs_usd'),
+                  'status':x['status'],'verified_profit_usd':None} for x in d['funding_scenarios']]
           else:
               s={'run_url':os.environ['RUN_URL'],'status':'FAILED','real_trades':0,'actual_earnings_usd':0}
           pathlib.Path('output').mkdir(exist_ok=True)
