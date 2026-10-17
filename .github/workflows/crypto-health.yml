@@ -17,7 +17,7 @@ permissions:
   contents: write
   issues: write
 
-# One history writer at a time, including the crypto paper producer.
+# Health state is written to its own branch; crypto paper history has a separate queue.
 concurrency:
   group: automated-alpha-crypto-health
   cancel-in-progress: false
@@ -54,8 +54,8 @@ jobs:
         run: |
           set -euo pipefail
           git worktree add --detach "$RUNNER_TEMP/crypto-health-history" origin/alpha-health-history
-          mkdir -p "$RUNNER_TEMP/crypto-history/history"
-          cp output/new-health.json "$RUNNER_TEMP/crypto-history/history/health-state.json"
+          mkdir -p "$RUNNER_TEMP/crypto-health-history/history"
+          cp output/new-health.json "$RUNNER_TEMP/crypto-health-history/history/health-state.json"
           git -C "$RUNNER_TEMP/crypto-health-history" config user.name 'github-actions[bot]'
           git -C "$RUNNER_TEMP/crypto-health-history" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git -C "$RUNNER_TEMP/crypto-health-history" add history/health-state.json
