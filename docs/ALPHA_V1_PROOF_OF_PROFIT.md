@@ -46,3 +46,12 @@ Persistent summary branch: alpha-v1-history / history/scans.jsonl
 - Bitnomial endpoint documentation contradicts itself about the /prod prefix. Try documented example path, then /prod on transport error; if both unavailable, record explicit funding-source failure. No overseas-data substitution.
 - Bitnomial BTC centi perpetual minimum **0.01 BTC**, confirmed via CFTC filing: https://bitnomial.com/exchange/regulatory/cftc/product-filings/26-036.pdf
 - At BTC $80,000, cash spot hedge for 0.01 BTC costs $800. The exchange clearinghouse baseline of 15% (estimate, FCM may require more) brings spot + derivatives margin to **at least ~$920 before fees**, exceeding our $900 simulation cap. This is a blocker even if the rate API works; another, smaller contract could change eligibility but requires separate review.
+
+## Expanded small-capital US funding research (2026-10-17)
+- The funding scanner now requests **three individual Bitnomial 8-hour estimates**: BTCUC, ETHUI and SOLUS. These are US listed products; they are **not** Binance.com or offshore derivatives.
+- BTCUC/PBTCUC minimum position: 0.01 BTC. https://bitnomial.com/exchange/regulatory/cftc/product-filings/26-036.pdf
+- ETHUI/PETHUI minimum position: 0.5 ETH. https://bitnomial.com/exchange/rulebook/product/crypto/pethui/
+- SOLUS/PSOLUS minimum position: 5 SOL. https://bitnomial.com/exchange/rulebook/product/crypto/psolus/
+- Estimated funding gross uses the **minimum exchange-contract notional** at observed public spot reference, NEVER an arbitrary fractional futures notional like $150. If a coin's spot book is missing, cash hedge and funding dollar estimate stay NULL.
+- Report minimum actual spot hedge cash + hypothetical baseline 15% futures margin, but never claim real minimum required margin without clearing broker confirmation. All three remain NON-EXECUTABLE without executable futures book, fees, FCM permission, transfer and full margin schedule.
+- SOL may be the only one of these three where one whole min-size futures contract plus cash spot hedge fits under our $900 paper capital ceiling at sampled price. Price moves and platform-specific minimums can change this.
