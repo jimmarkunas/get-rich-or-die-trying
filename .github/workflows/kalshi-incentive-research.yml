@@ -44,7 +44,7 @@ jobs:
         if: steps.pilot.outputs.active == 'true'
         run: |
           python -m alpha.incentive_research \
-            --pages 3 --page-size 300 --max-books 12 --budget 100 \
+            --pages 5 --page-size 500 --max-books 16 --budget 100 \
             --max-contracts 50 --out output/kalshi-incentives.json
       - name: Persist limited experiment history on isolated branch
         if: steps.pilot.outputs.active == 'true' && success()
