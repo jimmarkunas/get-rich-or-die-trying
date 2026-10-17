@@ -187,7 +187,19 @@ def scan(*, pages=3, page_size=300, max_books=12, budget='100', max_contracts=50
         # cap distinct market book requests and don't double-count income.
         by_ticker.setdefault(t,[]).append(p)
     ranked=sorted(by_ticker.items(),key=lambda it:(-max(D(x['period_reward']) for x in it[1]),it[0]))
-    selected=ranked[:max_books]
+    # Avoid repeating only alphabetically early, largest-pool markets.
+    # Four fixed markets provide continuity; the remainder rotates every six
+    # hours through other ranked programs. This is a bounded sample, not
+    # exhaustive discovery or an earnings ranking.
+    effective_now = now or datetime.now(timezone.utc)
+    anchor_count = min(4, max_books, len(ranked))
+    fixed = ranked[:anchor_count]
+    remaining = ranked[anchor_count:]
+    rotating_slots = min(max_books - anchor_count, len(remaining))
+    rotation_slot = int(effective_now.timestamp()) // (6 * 3600)
+    start_at = (rotation_slot * rotating_slots) % len(remaining) if remaining and rotating_slots else 0
+    rotation = [remaining[(start_at+i) % len(remaining)] for i in range(rotating_slots)]
+    selected = fixed + rotation
     observations=[]; errors={}
     for ticker, programs_for_market in selected:
         try:
@@ -203,6 +215,9 @@ def scan(*, pages=3, page_size=300, max_books=12, budget='100', max_contracts=50
             'programs_available':len(programs),'distinct_markets_available':len(ranked),
             'distinct_markets_sampled':len(selected),'programs_analyzed':len(observations),
             'truncated_market_selection':len(ranked)>len(selected),
+            'sampling':{'method':'highest_pool_fixed_anchors_plus_six_hour_rotation',
+                        'fixed_anchor_count':anchor_count,'rotating_count':len(rotation),
+                        'rotation_window_index':rotation_slot,'rotating_start_index':start_at},
             'pagination':meta,'samples':observations,'errors':errors,
             'feasible_visible_joins':sum(sum(row[k].get('status')=='visible_book_meets_depth_gate_personal_qualification_unknown'
                                                   for k in ('simulated_yes_bid','simulated_no_bid')) for row in observations),
