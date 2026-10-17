@@ -143,10 +143,21 @@ class ProfitReadOnlyTests(unittest.TestCase):
     def test_funding_has_no_verified_net(self):
         sample = funding("0.0001")
         x = funding_observation(sample)
-        self.assertEqual(x["status"], "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_SIZE_MARGIN_AND_ACCOUNT_ELIGIBILITY")
+        self.assertEqual(x["status"], "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_MARGIN_AND_ACCOUNT_ELIGIBILITY")
         self.assertEqual(x["estimated_gross_one_interval_usd"], "0.015000")
         self.assertIsNone(x["net_usd"])
         self.assertIsNone(x["verified_profit_usd"])
+
+    def test_centi_contract_minimum_exceeds_cap_at_btc_80k(self):
+        o = funding_observation(funding("0.0001"), spot_reference=Decimal("80000"))
+        self.assertEqual(o["minimum_spot_hedge_usd"], "800.000000")
+        self.assertEqual(o["indicative_total_cash_before_costs_usd"], "920.000000")
+        self.assertEqual(o["status"], "BLOCKED_MINIMUM_CONTRACT_PLUS_SPOT_HEDGE_EXCEEDS_CAPITAL")
+        self.assertIsNone(o["verified_profit_usd"])
+
+    def test_low_btc_contract_still_requires_margin_and_access(self):
+        o = funding_observation(funding("0.0001"), spot_reference=Decimal("50000"))
+        self.assertEqual(o["status"], "BLOCKED_NO_FUTURES_BOOK_FEE_CONTRACT_MARGIN_AND_ACCOUNT_ELIGIBILITY")
 
     def test_negative_funding_is_a_cost_for_short(self):
         x = funding_observation(funding("-0.0001"))
