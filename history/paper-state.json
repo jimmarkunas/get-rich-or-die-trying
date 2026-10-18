@@ -1,10 +1,10 @@
 {
   "symbols": {
     "BTCUSD": {
-      "last_closed_open_ms": 1792350000000,
+      "last_closed_open_ms": 1792360800000,
       "portfolios": {
         "grid": {
-          "bars": 15,
+          "bars": 16,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
@@ -20,7 +20,7 @@
           "wins": 0
         },
         "momentum": {
-          "bars": 15,
+          "bars": 16,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
@@ -38,14 +38,14 @@
       }
     },
     "ETHUSD": {
-      "last_closed_open_ms": 1792350000000,
+      "last_closed_open_ms": 1792360800000,
       "portfolios": {
         "grid": {
-          "bars": 15,
+          "bars": 16,
           "cash": "949.4234000946784000000000000",
           "cost_basis": "50.57659990532160000000000000",
           "entry_price": "2419.449120000000",
-          "exposure_bars": 15,
+          "exposure_bars": 16,
           "fees": "0.01011329732160000000000000",
           "losses": 0,
           "max_drawdown_pct": "0.1839134951030985357148252967",
@@ -57,7 +57,7 @@
           "wins": 0
         },
         "momentum": {
-          "bars": 15,
+          "bars": 16,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
@@ -75,14 +75,14 @@
       }
     },
     "SOLUSD": {
-      "last_closed_open_ms": 1792350000000,
+      "last_closed_open_ms": 1792360800000,
       "portfolios": {
         "grid": {
-          "bars": 15,
+          "bars": 16,
           "cash": "972.7659445769597800000000000",
           "cost_basis": "27.23405542304022000000000000",
           "entry_price": "104.392170000000",
-          "exposure_bars": 15,
+          "exposure_bars": 16,
           "fees": "0.00544572194022000000000000",
           "losses": 0,
           "max_drawdown_pct": "0.1032777175683927007769711211",
@@ -94,7 +94,7 @@
           "wins": 0
         },
         "momentum": {
-          "bars": 15,
+          "bars": 16,
           "cash": "1000",
           "cost_basis": "0",
           "entry_price": null,
