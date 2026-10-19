@@ -4,6 +4,7 @@
 
 ## 1. PRIORITY FOR CONTRACT / PARTIAL-ASSET DILIGENCE — Noble Supply & Logistics
 - Source: https://app.bondoro.com/preview/cases/Noble_Supply__Logistics_LLC/apa-summary
+- **Official FREE claim-agent case site:** https://veritaglobal.net/Noble — Chapter 11 case 26-11369 (District of Delaware). Primary docket nos. 251 (sale notice), 252 (potential assigned contracts / cure costs), and 219 (approved bidding procedures) are linked on that site. The official site confirms Oct. 30 2026 at 4pm ET bid deadline. At this gate, the full schedules and underlying contract economics have NOT been analyzed; link availability may be intermittent.
 - Public case context: Chapter 11 business group with units including Federal Resources Supply Company, Noble Defense, Noble Mission Support and K.D. Analytical Consulting.
 - Court-approved bidding procedures entered Sept. 26, 2026, per free public summary.
 - Published deadline: Oct. 30, 2026 at 4pm Eastern, auction Nov. 4 if held.
