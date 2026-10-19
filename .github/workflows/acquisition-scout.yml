@@ -1,0 +1,36 @@
+name: Illinois acquisition scout (free RSS, no PACER)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'acquisitions/**'
+      - 'tests/test_acquisition_scout.py'
+      - '.github/workflows/acquisition-scout.yml'
+permissions:
+  contents: read
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test parser and fail-closed behavior
+        run: python -m unittest discover -s tests -p 'test_acquisition_scout.py' -v
+      - name: Query only official free Illinois court RSS metadata
+        id: scan
+        continue-on-error: true
+        run: python -m acquisitions.scout --out output/acquisitions/illinois-latest.json
+      - name: Upload one scan's evidence even if court feed fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acquisition-scout-evidence
+          path: output/acquisitions/illinois-latest.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Report source failures honestly
+        if: steps.scan.outcome == 'failure'
+        run: echo 'At least one court RSS feed failed; do not call leads actionable.' && exit 1
