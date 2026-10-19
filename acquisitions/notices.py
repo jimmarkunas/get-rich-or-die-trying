@@ -18,10 +18,13 @@ NOTICE_FEEDS = {
         "https://www.dailydac.com/category/premium-public-notices/feed/",
     "DAILYDAC_NLR_PUBLIC_NOTICES":
         "https://www.dailydac.com/category/premium-public-notices/nlr_and_dd/feed/",
+    "PUBLIC_NEWS_DISCOVERY":
+        "https://news.google.com/rss/search?q=chapter+11+bankruptcy+asset+sale+auction+bid+deadline&hl=en-US&gl=US&ceid=US:en",
 }
 MAX_BYTES = 3_000_000
 MAX_ITEMS_PER_FEED = 80
 USER_AGENT = "AcquisitionScout/0.2 (public-RSS-research; no credentials)"
+TRANSACTION_WORDS = re.compile(r"\\b(?:sale|auction|bid|asset|liquidat|contract|acquisition)\\b", re.I)
 NOTICE_WORDS = re.compile(
     r"\b(?:bankruptcy|chapter\s+11|363\s+sale|article\s+9|ucc|"
     r"sale\s+process|asset\s+sale|notice\s+of\s+auction|"
@@ -88,11 +91,12 @@ def parse_notice_feed(body: bytes, source: str, feed_url: str,
         text = strip_markup(" ".join((node_text(item, "description"),
                                       node_text(item, "encoded"))))
         combined = title + " " + text
-        if not NOTICE_WORDS.search(combined):
+        if not NOTICE_WORDS.search(combined) or not TRANSACTION_WORDS.search(combined):
             continue
         link = node_text(item, "link")
         # Link included only as reference for future manual review, never fetched.
-        if not link.startswith("https://www.dailydac.com/"):
+        valid_prefixes = ("https://www.dailydac.com/",) if source != "PUBLIC_NEWS_DISCOVERY" else ("https://news.google.com/",)
+        if not link.startswith(valid_prefixes):
             continue
         kind = (
             "PROSPECTIVE_CHAPTER_11" if "prospective chapter 11" in combined.lower()
@@ -109,7 +113,7 @@ def parse_notice_feed(body: bytes, source: str, feed_url: str,
         )
         notices.append({
             "source": source,
-            "source_type": "FREE_PUBLIC_NOTICE_RSS",
+            "source_type": "PUBLIC_NEWS_DISCOVERY_UNVERIFIED" if source == "PUBLIC_NEWS_DISCOVERY" else "FREE_PUBLIC_NOTICE_RSS",
             "title": title,
             "url": link,
             "published_utc": published_date(node_text(item, "pubDate")),
@@ -132,7 +136,7 @@ class _NoCrossDomainRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         from urllib.parse import urlsplit
         parts = urlsplit(newurl)
-        if parts.scheme != "https" or parts.hostname not in ("www.dailydac.com", "dailydac.com"):
+        if parts.scheme != "https" or parts.hostname not in ("www.dailydac.com", "dailydac.com", "news.google.com"):
             raise ValueError("Redirect off allowlisted free notice domain blocked")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
@@ -177,9 +181,11 @@ def scan_notice_sources(*, today: dt.date | None = None) -> dict:
         "future_bid_dates_unconfirmed": sum(
             x["status"] == "FUTURE_DATE_REQUIRES_FRESH_VERIFICATION" for x in records),
         "verified_actionable_deals": 0,
+        "coverage_status": "DEGRADED_SOURCES" if errors else "SOURCES_RESPONDED",
         "notes": [
             "All extracted deadlines are as published, not validated against latest court orders.",
             "Unknown acquisition prices, contract transfer rights, cash flow and financing remain null.",
-            "Only allowlisted free public RSS was requested; article links and PACER never opened."
+            "Only allowlisted free public RSS was requested; article links and PACER never opened.",
+            "News RSS is discovery-only, not a primary-source sale notice or verified bid date."
         ],
     }
