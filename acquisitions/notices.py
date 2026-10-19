@@ -19,7 +19,7 @@ NOTICE_FEEDS = {
     "DAILYDAC_NLR_PUBLIC_NOTICES":
         "https://www.dailydac.com/category/premium-public-notices/nlr_and_dd/feed/",
     "PUBLIC_NEWS_DISCOVERY":
-        "https://news.google.com/rss/search?q=chapter+11+bankruptcy+asset+sale+auction+bid+deadline&hl=en-US&gl=US&ceid=US:en",
+        "https://news.google.com/rss/search?q=chapter+11+bankruptcy+asset+sale+auction+when%3A30d&hl=en-US&gl=US&ceid=US:en",
 }
 MAX_BYTES = 3_000_000
 MAX_ITEMS_PER_FEED = 80
@@ -91,8 +91,16 @@ def parse_notice_feed(body: bytes, source: str, feed_url: str,
         text = strip_markup(" ".join((node_text(item, "description"),
                                       node_text(item, "encoded"))))
         combined = title + " " + text
-        if not NOTICE_WORDS.search(combined) or not TRANSACTION_WORDS.search(combined):
+        if not NOTICE_WORDS.search(combined) or not TRANSACTION_WORDS.search(title):
             continue
+        pub = published_date(node_text(item, "pubDate"))
+        if source == "PUBLIC_NEWS_DISCOVERY":
+            # News searches can return stale stories despite a time-limited query.
+            if not pub:
+                continue
+            age = (today - dt.date.fromisoformat(pub[:10])).days
+            if age < -1 or age > 45:
+                continue
         link = node_text(item, "link")
         # Link included only as reference for future manual review, never fetched.
         valid_prefixes = ("https://www.dailydac.com/",) if source != "PUBLIC_NEWS_DISCOVERY" else ("https://news.google.com/",)
@@ -116,7 +124,7 @@ def parse_notice_feed(body: bytes, source: str, feed_url: str,
             "source_type": "PUBLIC_NEWS_DISCOVERY_UNVERIFIED" if source == "PUBLIC_NEWS_DISCOVERY" else "FREE_PUBLIC_NOTICE_RSS",
             "title": title,
             "url": link,
-            "published_utc": published_date(node_text(item, "pubDate")),
+            "published_utc": pub,
             "notice_type": kind,
             "bid_deadline_as_published": deadline,
             "deadline_context_excerpt": context,
