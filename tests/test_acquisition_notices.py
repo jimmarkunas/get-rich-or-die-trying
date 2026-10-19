@@ -74,8 +74,18 @@ class PublicNoticeTests(unittest.TestCase):
         self.assertEqual(result["verified_actionable_deals"], 0)
         with patch("acquisitions.notices.get_free_notice_rss", return_value=b"<bad"):
             result = scan_notice_sources(today=self.today)
-        self.assertEqual(len(result["source_errors"]), 2)
+        self.assertEqual(len(result["source_errors"]), len(NOTICE_FEEDS))
         self.assertEqual(result["free_sale_notice_matches"], 0)
+
+    def test_news_feed_is_not_a_primary_sale_notice(self):
+        news = b'''<rss><channel><item><title>Company Chapter 11 bankruptcy asset sale</title>
+<link>https://news.google.com/rss/articles/sample</link>
+<description>Sale auction date October 30, 2026.</description></item></channel></rss>'''
+        rows = parse_notice_feed(news, "PUBLIC_NEWS_DISCOVERY", NOTICE_FEEDS["PUBLIC_NEWS_DISCOVERY"], today=self.today)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["source_type"], "PUBLIC_NEWS_DISCOVERY_UNVERIFIED")
+        self.assertIsNone(rows[0]["bid_deadline_as_published"])
+        self.assertFalse(rows[0]["verified_actionable"])
 
     def test_combined_report_never_claims_financeability(self):
         with patch("acquisitions.pipeline.scan_courts", return_value={
