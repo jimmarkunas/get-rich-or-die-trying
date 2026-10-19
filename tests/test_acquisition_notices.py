@@ -80,7 +80,7 @@ class PublicNoticeTests(unittest.TestCase):
     def test_news_feed_is_not_a_primary_sale_notice(self):
         news = b'''<rss><channel><item><title>Company Chapter 11 bankruptcy asset sale</title>
 <link>https://news.google.com/rss/articles/sample</link>
-<description>Sale auction date October 30, 2026.</description></item></channel></rss>'''
+<description>Sale auction date October 30, 2026.</description><pubDate>Sun, 18 Oct 2026 12:00:00 GMT</pubDate></item></channel></rss>'''
         rows = parse_notice_feed(news, "PUBLIC_NEWS_DISCOVERY", NOTICE_FEEDS["PUBLIC_NEWS_DISCOVERY"], today=self.today)
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["source_type"], "PUBLIC_NEWS_DISCOVERY_UNVERIFIED")
