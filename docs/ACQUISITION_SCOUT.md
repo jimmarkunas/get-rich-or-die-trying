@@ -46,3 +46,9 @@ Each RSS item preserves a primary free URL, relevant contract words, a date **on
 - Prospective upper-Midwest foundry, October 5 DailyDAC notice; contemplated Chapter 11 only, not a pending approved sale, net losses reported, $7M estimated pension withdrawal exposure before a sale. Public notice: https://www.dailydac.com/public-notice-of-prospective-chapter-11-filing-and-363-sale-process-aluminum-brass-bronze-foundry-and-machine-shop/ . Do not interpret asset base as financeable contract revenue.
 
 Manual or pull-request workflow only. No cron, no new ChatGPT task, no changes to LIFE OS or automated trading jobs. 
+
+### Source reliability finding
+
+DailyDAC public WordPress RSS may return HTTP 403 to hosted GitHub runners. We do not bypass it. Source errors are explicit in the JSON. As independent free fallback, Google News public RSS is polled read-only with a 30-day query and hard 45-day publication age filter. This feed is NEWS DISCOVERY ONLY: no direct primary sale notice, approved bid deadline, or verified purchase opportunity. If any optional source fails, the combined report is PARTIAL_PUBLIC_NOTICE_COVERAGE, not a full green source-coverage claim; mandatory court failure or complete public notice discovery failure is an operational failure. The job still does no paid PACER requests and opens no news links.
+
+One live source sample surfaced 8 free public-notice index entries (many expired or unrelated) while another returned HTTP 403. No direct, financeable, transferable-contract sale has been verified. A separate manual source check identified Noble Supply & Logistics as an acquisition research candidate with published October 30 bid date, but bids require 10% deposit, proven financing and contract cure obligations. Reference: https://app.bondoro.com/preview/cases/Noble_Supply__Logistics_LLC/apa-summary . Not a recommendation to bid or proof of affordability.
