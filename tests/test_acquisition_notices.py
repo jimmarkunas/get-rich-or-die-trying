@@ -91,7 +91,7 @@ class PublicNoticeTests(unittest.TestCase):
         with patch("acquisitions.pipeline.scan_courts", return_value={
             "courts_failed": {}, "potential_docket_leads": 0
         }), patch("acquisitions.pipeline.scan_notice_sources", return_value={
-            "source_errors": {}, "free_sale_notice_matches": 3, "notice_candidates": []
+            "sources_checked": NOTICE_FEEDS, "source_errors": {}, "free_sale_notice_matches": 3, "notice_candidates": []
         }):
             result = run()
         self.assertEqual(result["verified_financeable_acquisitions"], 0)
