@@ -24,7 +24,7 @@ NOTICE_FEEDS = {
 MAX_BYTES = 3_000_000
 MAX_ITEMS_PER_FEED = 80
 USER_AGENT = "AcquisitionScout/0.2 (public-RSS-research; no credentials)"
-TRANSACTION_WORDS = re.compile(r"\\b(?:sale|auction|bid|asset|liquidat|contract|acquisition)\\b", re.I)
+TRANSACTION_WORDS = re.compile(r"\b(?:sale|auction|bid|asset|liquidat|contract|acquisition)\b", re.I)
 NOTICE_WORDS = re.compile(
     r"\b(?:bankruptcy|chapter\s+11|363\s+sale|article\s+9|ucc|"
     r"sale\s+process|asset\s+sale|notice\s+of\s+auction|"
