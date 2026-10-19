@@ -61,6 +61,9 @@ def parse_feed(body: bytes, court: str, source_url: str) -> list[dict]:
         title = _plain(_tag(item, "title"))
         description = _plain(_tag(item, "description"))
         combined = f"{title} {description}"
+        # Only Chapter 11. Personal Chapter 13 sale motions are not operating businesses.
+        if not re.search(r"\bchapter\s*:?\s*11\b", combined, re.I):
+            continue
         if not SALE.search(combined) or EXCLUDE.search(combined):
             continue
         link = _tag(item, "link")
