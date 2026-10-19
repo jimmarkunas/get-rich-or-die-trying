@@ -6,8 +6,9 @@ from acquisitions.scout import FEEDS, fetch_public_feed, parse_feed, scan
 
 RSS = b'''<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel><title>IL Docket</title>
-<item><title>In re ABC: Motion for sale of business assets</title><description>Assignment of customer contracts &amp; assets</description><link>https://ecf.ilnb.uscourts.gov/cgi-bin/ShowDoc.pl?foo</link><pubDate>Sun, 18 Oct 2026 12:00:00 GMT</pubDate></item>
+<item><title>In re ABC: Motion for sale of business assets</title><description>Chapter: 11 Assignment of customer contracts &amp; assets</description><link>https://ecf.ilnb.uscourts.gov/cgi-bin/ShowDoc.pl?foo</link><pubDate>Sun, 18 Oct 2026 12:00:00 GMT</pubDate></item>
 <item><title>Proof of claim</title><description>Unrelated</description><link>https://example.org/a</link></item>
+<item><title>Chapter 13 Sale of assets under 363(b)</title><description>Chapter: 13</description></item>
 <item><title>Foreclosure sale of assets</title><description>Personal property</description></item>
 </channel></rss>'''
 
