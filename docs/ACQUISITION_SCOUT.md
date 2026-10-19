@@ -23,3 +23,26 @@ GitHub Actions is manual or PR-only, **not scheduled**. Runs read-only and uploa
 All financial fields default to null and leads remain UNVERIFIED_DOCKET_LEAD; verified live financeable deal count remains zero until human due diligence. This scanner does not produce valuations, proof of financing or contract-transfer rights.
 
 No new scheduled ChatGPT task. LIFE OS and existing trading jobs unchanged.
+
+
+## Expanded public sources (October 2026)
+
+The pipeline command is now:
+  python -m acquisitions.pipeline --out output/acquisitions/illinois-latest.json
+
+The existing court-only command remains available. The new pipeline also checks public Chapter 11 / Section 363, UCC Article 9, and pre-filing sales in two allowlisted DailyDAC public-notice RSS feeds. Public auction notices are *discovery leads*, not automatically available or financeable contracts. The RSS content is never trusted for current court-approved dates. No article or document links are automatically followed.
+
+Free case-agent reference directories:
+- Epiq public case index: https://dm.epiq11.com/
+- Kroll public case index: https://www.kroll.com/en/restructuring-administration-cases
+
+Those case-agent directories are recorded for manual cross-reference only, because their live case search/document interfaces have not passed source ingestion tests. Their documents are not counted as automatically covered.
+
+Each RSS item preserves a primary free URL, relevant contract words, a date **only when identified as a bid deadline**, and separate status (deadline unknown, expired as published, future as published but unconfirmed, or prospective case not filed). All prices, deposits, contract assignment rights and verified cash flow remain null without independent primary-source evidence. A pending deadline is NOT a qualified bid or an acquisition.
+
+### Real examples to research, not purchase recommendations
+
+- UPG Enterprises, LLC, Northern District of Illinois case 26-15734. Published bidding motion proposed October 28, 2026 bid deadline; November 2 auction. Three proposed stalking-horse bids aggregate over $14M plus inventory. Proposed 10% bid deposit and financial-capability requirements. Too capital intensive to bid directly with under $1,000. Public case portal: https://dm.epiq11.com/ and free public summary: https://app.bondoro.com/preview/cases/Upg_Enterprises_LLC/apa-summary . Check entered court order before action.
+- Prospective upper-Midwest foundry, October 5 DailyDAC notice; contemplated Chapter 11 only, not a pending approved sale, net losses reported, $7M estimated pension withdrawal exposure before a sale. Public notice: https://www.dailydac.com/public-notice-of-prospective-chapter-11-filing-and-363-sale-process-aluminum-brass-bronze-foundry-and-machine-shop/ . Do not interpret asset base as financeable contract revenue.
+
+Manual or pull-request workflow only. No cron, no new ChatGPT task, no changes to LIFE OS or automated trading jobs. 
