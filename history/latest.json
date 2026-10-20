@@ -2,10 +2,10 @@
   "actual_earnings_usd": 0,
   "errors": [],
   "funding_observations": 3,
-  "generated_at_utc": "2026-10-20T18:36:44.484063+00:00",
+  "generated_at_utc": "2026-10-20T22:30:20.240104+00:00",
   "positive_unverified": 0,
   "real_trades": 0,
-  "run_url": "https://github.com/jimmarkunas/get-rich-or-die-trying/actions/runs/39476248173",
+  "run_url": "https://github.com/jimmarkunas/get-rich-or-die-trying/actions/runs/39508578945",
   "spread_status_counts": {
     "reject_insufficient_ask_depth": 4,
     "reject_not_positive_after_buffers": 14
@@ -15,7 +15,7 @@
     {
       "buy": "kraken",
       "coin": "BTC",
-      "indicative_net_usd": "-2.086930",
+      "indicative_net_usd": "-2.091391",
       "required_prefunding_usd_or_equivalent": "300.000000",
       "sell": "binance_us",
       "status": "reject_not_positive_after_buffers",
@@ -24,7 +24,7 @@
     {
       "buy": "kraken",
       "coin": "ETH",
-      "indicative_net_usd": "-2.091974",
+      "indicative_net_usd": "-2.107300",
       "required_prefunding_usd_or_equivalent": "300.000000",
       "sell": "binance_us",
       "status": "reject_not_positive_after_buffers",
@@ -33,7 +33,7 @@
     {
       "buy": "kraken",
       "coin": "SOL",
-      "indicative_net_usd": "-2.117857",
+      "indicative_net_usd": "-2.140484",
       "required_prefunding_usd_or_equivalent": "300.000000",
       "sell": "binance_us",
       "status": "reject_not_positive_after_buffers",
@@ -44,10 +44,10 @@
   "us_funding": [
     {
       "base_coin": "BTC",
-      "estimated_gross_one_interval_usd": "0.082486",
+      "estimated_gross_one_interval_usd": "0.082963",
       "estimated_rate": "0.0001",
-      "indicative_total_cash_before_costs_usd": "948.585205",
-      "minimum_contract_notional_usd": "824.856700",
+      "indicative_total_cash_before_costs_usd": "954.071970",
+      "minimum_contract_notional_usd": "829.627800",
       "minimum_futures_contract_btc": "0.01",
       "minimum_futures_contract_units": "0.01",
       "product": "BTCUC",
@@ -56,10 +56,10 @@
     },
     {
       "base_coin": "ETH",
-      "estimated_gross_one_interval_usd": "0.121860",
+      "estimated_gross_one_interval_usd": "0.122828",
       "estimated_rate": "0.0001",
-      "indicative_total_cash_before_costs_usd": "1401.390000",
-      "minimum_contract_notional_usd": "1218.600000",
+      "indicative_total_cash_before_costs_usd": "1412.522000",
+      "minimum_contract_notional_usd": "1228.280000",
       "minimum_futures_contract_btc": null,
       "minimum_futures_contract_units": "0.5",
       "product": "ETHUI",
@@ -68,10 +68,10 @@
     },
     {
       "base_coin": "SOL",
-      "estimated_gross_one_interval_usd": "0.053005",
+      "estimated_gross_one_interval_usd": "0.053415",
       "estimated_rate": "0.0001",
-      "indicative_total_cash_before_costs_usd": "609.557500",
-      "minimum_contract_notional_usd": "530.050000",
+      "indicative_total_cash_before_costs_usd": "614.272500",
+      "minimum_contract_notional_usd": "534.150000",
       "minimum_futures_contract_btc": null,
       "minimum_futures_contract_units": "5",
       "product": "SOLUS",
