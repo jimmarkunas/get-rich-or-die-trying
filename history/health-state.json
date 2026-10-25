@@ -1,24 +1,24 @@
 {
-  "checked_at_utc": "2026-10-25T21:44:07.604130+00:00",
+  "checked_at_utc": "2026-10-25T21:44:21.269390+00:00",
   "live_trades": 0,
   "max_lag_hours": 2.0,
   "reason": "paper-state freshness, not profitability",
-  "status": "stale",
+  "status": "healthy",
   "symbols": {
     "BTCUSD": {
-      "closed_bar_open_utc": "2026-10-25T18:00:00+00:00",
-      "lag_after_close_hours": 2.735,
-      "status": "stale"
+      "closed_bar_open_utc": "2026-10-25T20:00:00+00:00",
+      "lag_after_close_hours": 0.739,
+      "status": "healthy"
     },
     "ETHUSD": {
-      "closed_bar_open_utc": "2026-10-25T18:00:00+00:00",
-      "lag_after_close_hours": 2.735,
-      "status": "stale"
+      "closed_bar_open_utc": "2026-10-25T20:00:00+00:00",
+      "lag_after_close_hours": 0.739,
+      "status": "healthy"
     },
     "SOLUSD": {
-      "closed_bar_open_utc": "2026-10-25T18:00:00+00:00",
-      "lag_after_close_hours": 2.735,
-      "status": "stale"
+      "closed_bar_open_utc": "2026-10-25T20:00:00+00:00",
+      "lag_after_close_hours": 0.739,
+      "status": "healthy"
     }
   }
 }
