@@ -1,14 +1,14 @@
 {
   "symbols": {
     "BTCUSD": {
-      "last_closed_open_ms": 1793120400000,
+      "last_closed_open_ms": 1793127600000,
       "portfolios": {
         "grid": {
-          "bars": 95,
+          "bars": 96,
           "cash": "749.9500000000000000000000000",
           "cost_basis": "250.0500000000000000000000000",
           "entry_price": "81400.409865000000",
-          "exposure_bars": 47,
+          "exposure_bars": 48,
           "fees": "0.05000000000000000000000000000",
           "losses": 0,
           "max_drawdown_pct": "0.6577901412010405014861768178",
@@ -20,69 +20,69 @@
           "wins": 0
         },
         "momentum": {
-          "bars": 95,
-          "cash": "995.4148045600546000000000000",
-          "cost_basis": "0",
-          "entry_price": null,
-          "exposure_bars": 14,
-          "fees": "0.10253214186540000000000000",
+          "bars": 96,
+          "cash": "882.2876116296554008000000000",
+          "cost_basis": "113.1271929303991992000000000",
+          "entry_price": "80742.841245000000",
+          "exposure_bars": 15,
+          "fees": "0.12515305626859920000000000",
           "losses": 3,
-          "max_drawdown_pct": "0.4619668164012990000000000",
+          "max_drawdown_pct": "0.4664354386344599200000000",
           "peak_equity": "1000",
-          "slippage_cost": "0.2563292980800000000000",
-          "trades": 6,
-          "turnover_usd": "512.6607093270000000000000",
-          "units": "0",
+          "slippage_cost": "0.3128533220760000000000",
+          "trades": 7,
+          "turnover_usd": "625.7652813429960000000000",
+          "units": "0.0014008000",
           "wins": 0
         }
       }
     },
     "ETHUSD": {
-      "last_closed_open_ms": 1793120400000,
+      "last_closed_open_ms": 1793127600000,
       "portfolios": {
         "grid": {
-          "bars": 95,
-          "cash": "950.575285622794700000000000",
-          "cost_basis": "49.621915998720000000000000",
-          "entry_price": "2385.192000000000",
+          "bars": 96,
+          "cash": "999.297816839260300000000000",
+          "cost_basis": "0",
+          "entry_price": null,
           "exposure_bars": 65,
-          "fees": "0.03019248770530000000000000",
-          "losses": 0,
+          "fees": "0.03993894323970000000000000",
+          "losses": 1,
           "max_drawdown_pct": "0.2326706082558388286571830510",
           "peak_equity": "1000.618005622794700000000000",
-          "slippage_cost": "0.0754688895000000000000",
-          "trades": 3,
-          "turnover_usd": "150.9624385265000000000000",
-          "units": "0.02080000",
+          "slippage_cost": "0.0998472175000000000000",
+          "trades": 4,
+          "turnover_usd": "199.6947161985000000000000",
+          "units": "0",
           "wins": 1
         },
         "momentum": {
-          "bars": 95,
-          "cash": "993.2132778821051264314716364",
-          "cost_basis": "0",
-          "entry_price": null,
-          "exposure_bars": 18,
-          "fees": "0.09866238805403183165262485222",
+          "bars": 96,
+          "cash": "854.5289431765631534314716364",
+          "cost_basis": "138.6843347055419730000000000",
+          "entry_price": "2345.302065000000",
+          "exposure_bars": 19,
+          "fees": "0.1263937087310048316526248522",
           "losses": 1,
           "max_drawdown_pct": "1.315678524895306694701885141",
           "peak_equity": "1006.185797099406978161920266",
-          "slippage_cost": "0.2466543597837370648553941255",
-          "trades": 2,
-          "turnover_usd": "493.3119402701591582631242611",
-          "units": "0",
+          "slippage_cost": "0.3159480146487370648553941255",
+          "trades": 3,
+          "turnover_usd": "631.9685436550241582631242611",
+          "units": "0.0591210000",
           "wins": 0
         }
       }
     },
     "SOLUSD": {
-      "last_closed_open_ms": 1793120400000,
+      "last_closed_open_ms": 1793127600000,
       "portfolios": {
         "grid": {
-          "bars": 95,
+          "bars": 96,
           "cash": "971.5884545351903900000000000",
           "cost_basis": "27.26911154866338000000000000",
           "entry_price": "99.709830000000",
-          "exposure_bars": 45,
+          "exposure_bars": 46,
           "fees": "0.04993040685961000000000000",
           "losses": 1,
           "max_drawdown_pct": "0.4020053890295143907289712046",
@@ -94,7 +94,7 @@
           "wins": 1
         },
         "momentum": {
-          "bars": 95,
+          "bars": 96,
           "cash": "990.9772641721117758482319140",
           "cost_basis": "0",
           "entry_price": null,
