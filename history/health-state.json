@@ -1,5 +1,5 @@
 {
-  "checked_at_utc": "2026-10-29T02:24:35.188600+00:00",
+  "checked_at_utc": "2026-10-29T02:56:38.020918+00:00",
   "live_trades": 0,
   "max_lag_hours": 2.0,
   "reason": "paper-state freshness, not profitability",
@@ -7,17 +7,17 @@
   "symbols": {
     "BTCUSD": {
       "closed_bar_open_utc": "2026-10-29T01:00:00+00:00",
-      "lag_after_close_hours": 0.41,
+      "lag_after_close_hours": 0.944,
       "status": "healthy"
     },
     "ETHUSD": {
       "closed_bar_open_utc": "2026-10-29T01:00:00+00:00",
-      "lag_after_close_hours": 0.41,
+      "lag_after_close_hours": 0.944,
       "status": "healthy"
     },
     "SOLUSD": {
       "closed_bar_open_utc": "2026-10-29T01:00:00+00:00",
-      "lag_after_close_hours": 0.41,
+      "lag_after_close_hours": 0.944,
       "status": "healthy"
     }
   }
