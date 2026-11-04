@@ -1,10 +1,10 @@
 {
   "symbols": {
     "BTCUSD": {
-      "last_closed_open_ms": 1793736000000,
+      "last_closed_open_ms": 1793750400000,
       "portfolios": {
         "grid": {
-          "bars": 151,
+          "bars": 152,
           "cash": "989.4096204851812327641731159",
           "cost_basis": "0",
           "entry_price": null,
@@ -20,7 +20,7 @@
           "wins": 1
         },
         "momentum": {
-          "bars": 151,
+          "bars": 152,
           "cash": "995.7014419500026264000000000",
           "cost_basis": "0",
           "entry_price": null,
@@ -38,10 +38,10 @@
       }
     },
     "ETHUSD": {
-      "last_closed_open_ms": 1793736000000,
+      "last_closed_open_ms": 1793750400000,
       "portfolios": {
         "grid": {
-          "bars": 151,
+          "bars": 152,
           "cash": "1004.718259912344530662206984",
           "cost_basis": "0",
           "entry_price": null,
@@ -57,14 +57,14 @@
           "wins": 2
         },
         "momentum": {
-          "bars": 151,
+          "bars": 152,
           "cash": "876.1004121301327754314716364",
           "cost_basis": "114.8705530509268440000000000",
           "entry_price": "2298.468660000000",
-          "exposure_bars": 31,
+          "exposure_bars": 32,
           "fees": "0.1766570886113828316526248522",
           "losses": 2,
-          "max_drawdown_pct": "1.520414479450538759780422427",
+          "max_drawdown_pct": "1.692684375825229059819635656",
           "peak_equity": "1006.185797099406978161920266",
           "slippage_cost": "0.4416119011987370648553941255",
           "trades": 5,
@@ -75,10 +75,10 @@
       }
     },
     "SOLUSD": {
-      "last_closed_open_ms": 1793736000000,
+      "last_closed_open_ms": 1793750400000,
       "portfolios": {
         "grid": {
-          "bars": 151,
+          "bars": 152,
           "cash": "991.9342997134117000000000000",
           "cost_basis": "0",
           "entry_price": null,
@@ -94,7 +94,7 @@
           "wins": 2
         },
         "momentum": {
-          "bars": 151,
+          "bars": 152,
           "cash": "990.8320798178014558482319140",
           "cost_basis": "0",
           "entry_price": null,
