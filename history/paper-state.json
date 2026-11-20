@@ -1,14 +1,14 @@
 {
   "symbols": {
     "BTCUSD": {
-      "last_closed_open_ms": 1795172400000,
+      "last_closed_open_ms": 1795201200000,
       "portfolios": {
         "grid": {
-          "bars": 258,
+          "bars": 259,
           "cash": "960.0906871632927727641731159",
           "cost_basis": "24.666500935724400000000000",
           "entry_price": "61653.921555000000",
-          "exposure_bars": 147,
+          "exposure_bars": 148,
           "fees": "0.3782251702906612313902867148",
           "losses": 6,
           "max_drawdown_pct": "2.050907778953246280372569843",
@@ -20,7 +20,7 @@
           "wins": 1
         },
         "momentum": {
-          "bars": 258,
+          "bars": 259,
           "cash": "981.2460334643911217666692740",
           "cost_basis": "0",
           "entry_price": null,
@@ -38,10 +38,10 @@
       }
     },
     "ETHUSD": {
-      "last_closed_open_ms": 1795172400000,
+      "last_closed_open_ms": 1795201200000,
       "portfolios": {
         "grid": {
-          "bars": 258,
+          "bars": 259,
           "cash": "959.4926014117871200510030633",
           "cost_basis": "0",
           "entry_price": null,
@@ -57,7 +57,7 @@
           "wins": 2
         },
         "momentum": {
-          "bars": 258,
+          "bars": 259,
           "cash": "980.2095244289592194950256023",
           "cost_basis": "0",
           "entry_price": null,
@@ -75,14 +75,14 @@
       }
     },
     "SOLUSD": {
-      "last_closed_open_ms": 1795172400000,
+      "last_closed_open_ms": 1795201200000,
       "portfolios": {
         "grid": {
-          "bars": 258,
+          "bars": 259,
           "cash": "962.9336495649277800000000000",
           "cost_basis": "21.78506835609273000000000000",
           "entry_price": "71.325645000000",
-          "exposure_bars": 138,
+          "exposure_bars": 139,
           "fees": "0.22269637337222000000000000",
           "losses": 6,
           "max_drawdown_pct": "1.960758188611527702763775376",
@@ -94,7 +94,7 @@
           "wins": 4
         },
         "momentum": {
-          "bars": 258,
+          "bars": 259,
           "cash": "988.0881280254167058482319140",
           "cost_basis": "0",
           "entry_price": null,
