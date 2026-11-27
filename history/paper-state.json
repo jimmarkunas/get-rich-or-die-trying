@@ -1,10 +1,10 @@
 {
   "symbols": {
     "BTCUSD": {
-      "last_closed_open_ms": 1795784400000,
+      "last_closed_open_ms": 1795809600000,
       "portfolios": {
         "grid": {
-          "bars": 297,
+          "bars": 298,
           "cash": "985.7564787509529527641731159",
           "cost_basis": "0",
           "entry_price": null,
@@ -20,11 +20,11 @@
           "wins": 2
         },
         "momentum": {
-          "bars": 297,
+          "bars": 298,
           "cash": "950.1065928940556117666692740",
           "cost_basis": "31.139440570335510000000000",
           "entry_price": "61045.517505000000",
-          "exposure_bars": 45,
+          "exposure_bars": 46,
           "fees": "0.2606940601426743198573053159",
           "losses": 5,
           "max_drawdown_pct": "1.970282490594438823333072600",
@@ -38,10 +38,10 @@
       }
     },
     "ETHUSD": {
-      "last_closed_open_ms": 1795784400000,
+      "last_closed_open_ms": 1795809600000,
       "portfolios": {
         "grid": {
-          "bars": 297,
+          "bars": 298,
           "cash": "961.0748665488215200510030633",
           "cost_basis": "0",
           "entry_price": null,
@@ -57,7 +57,7 @@
           "wins": 3
         },
         "momentum": {
-          "bars": 297,
+          "bars": 298,
           "cash": "979.2835845945972194950256023",
           "cost_basis": "0",
           "entry_price": null,
@@ -75,10 +75,10 @@
       }
     },
     "SOLUSD": {
-      "last_closed_open_ms": 1795784400000,
+      "last_closed_open_ms": 1795809600000,
       "portfolios": {
         "grid": {
-          "bars": 297,
+          "bars": 298,
           "cash": "992.5511634150998206593445984",
           "cost_basis": "0",
           "entry_price": null,
@@ -94,11 +94,11 @@
           "wins": 5
         },
         "momentum": {
-          "bars": 297,
+          "bars": 298,
           "cash": "975.7342050948887058482319140",
           "cost_basis": "12.353922930528000000000000",
           "entry_price": "71.395680000000",
-          "exposure_bars": 58,
+          "exposure_bars": 59,
           "fees": "0.2102000062046832338164096647",
           "losses": 6,
           "max_drawdown_pct": "1.329412300978990852602048148",
